@@ -142,25 +142,30 @@ function updateLayerSummary(){
 function drawMarkers(){
   markerHits=[];
   if(!visibleMarkers.length)return;
-  const cells=new Map(),cellSize=42;
+  const cells=new Map(),cellSize=42,margin=cellSize+24;
   for(const marker of visibleMarkers){
     const x=camera.x+marker.pixel.x*camera.scale,y=camera.y+marker.pixel.y*camera.scale;
-    if(x< -24||x>width+24||y< -24||y>height+24)continue;
-    const key=`${Math.floor(x/cellSize)},${Math.floor(y/cellSize)}`;
+    // Keep the grid fixed to the map so dragging cannot reshuffle clusters.
+    // The margin includes every member of a cluster whose center is on screen.
+    if(x< -margin||x>width+margin||y< -margin||y>height+margin)continue;
+    const key=`${Math.floor(marker.pixel.x*camera.scale/cellSize)},${Math.floor(marker.pixel.y*camera.scale/cellSize)}`;
     let cell=cells.get(key);if(!cell){cell={x:0,y:0,markers:[]};cells.set(key,cell);}
-    cell.x+=x;cell.y+=y;cell.markers.push(marker);
+    cell.x+=marker.pixel.x;cell.y+=marker.pixel.y;cell.markers.push(marker);
   }
   context.save();context.textAlign='center';context.textBaseline='middle';context.font='bold 11px Segoe UI,Arial,sans-serif';
   for(const cell of cells.values()){
-    const count=cell.markers.length,x=cell.x/count,y=cell.y/count,cluster=count>1,r=cluster?16:14;
+    const count=cell.markers.length,x=camera.x+cell.x/count*camera.scale,y=camera.y+cell.y/count*camera.scale,cluster=count>1,r=cluster?16:14;
+    if(x< -24||x>width+24||y< -24||y>height+24)continue;
     const category=categoryById.get(cell.markers[0].category);
     const completed=!cluster&&completedMarkers.has(cell.markers[0].id);
     context.globalAlpha=completed ? .55 : 1;
-    context.shadowColor='#07151c';context.shadowBlur=5;
-    context.beginPath();context.arc(x,y,r,0,Math.PI*2);
-    context.fillStyle='#112833';context.fill();
-    context.shadowBlur=0;context.strokeStyle=cluster?'#c7e5e7':'#eef8f4';context.lineWidth=2;context.stroke();
-    if(cluster){context.fillStyle='#eef8f4';context.fillText(count>99?'99+':String(count),x,y+.5);}
+    if(cluster){
+      context.shadowColor='#07151c';context.shadowBlur=5;
+      context.beginPath();context.arc(x,y,r,0,Math.PI*2);
+      context.fillStyle='#112833';context.fill();
+      context.shadowBlur=0;context.strokeStyle='#c7e5e7';context.lineWidth=2;context.stroke();
+      context.fillStyle='#eef8f4';context.fillText(count>99?'99+':String(count),x,y+.5);
+    }
     else{
       const icon=markerIcon(cell.markers[0].icon||category.icon);
       if(icon)context.drawImage(icon,x-12,y-12,24,24);
