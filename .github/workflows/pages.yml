@@ -26,10 +26,12 @@ jobs:
       - name: Prepare map and terrain
         run: |
           mkdir -p _site
-          cp index.html coordinates.js elevation.js map-config.js map.js markers.js markers.json style.css world-map.webp MARKER-DATA-LICENSE.txt _site/
+          cp index.html coordinates.js elevation.js map-config.js map.js markers.js markers.json tree-markers.json style.css world-map.webp tree-map.webp MARKER-DATA-LICENSE.txt _site/
           unzip -q terrain.zip -d _site
+          unzip -q terrain-tree.zip -d _site
           test -f _site/index.html
           test -f _site/terrain/4/0/0.png
+          test -f _site/terrain-tree/4/0/0.png
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Upload Pages artifact
