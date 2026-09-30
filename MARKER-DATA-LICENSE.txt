@@ -7,6 +7,13 @@ names, plus ancient-ruin schematic names, also come from that extraction.
 The source's unique IDs are stored with those records. Prior PalWaypoint
 progress IDs are retained so existing browser checkboxes keep their state.
 
+All 1,816 egg-spawner positions (1,786 Palpagos Islands and 30 World Tree)
+are from the Palworld Save Pal game-data extraction at
+https://github.com/oMaN-Rod/palworld-save-pal/blob/main/data/json/eggs_spawners.json
+(snapshot retrieved September 30, 2026; source blob SHA
+84dcb320ef07c219939e13da65b61106c8ef376b). Its instance IDs are
+stored with the egg records. Prior PalWaypoint pin IDs are retained.
+
 The 77 category badges are PalWaypoint compositions using pictograms from
 Lucide Static 1.48.0 (ISC license). Its license is included in the deployed
 icons/palwaypoint/LICENSE-lucide.txt file. Badge shapes and colors are
