@@ -16,6 +16,7 @@ const unpinButton = document.querySelector('#unpin');
 const layersToggle=document.querySelector('#layers-toggle');
 const layersPanel=document.querySelector('#layers-panel');
 const mapBody=document.querySelector('#map-body');
+const sidebarBackdrop=document.querySelector('#sidebar-backdrop');
 const mapButtons=[...document.querySelectorAll('.map-switcher button')];
 const layerList=document.querySelector('#layer-list');
 const layerStatus=document.querySelector('#layer-status');
@@ -239,9 +240,21 @@ document.querySelector('#zoom-in').addEventListener('click',()=>{cursor=null;zoo
 document.querySelector('#zoom-out').addEventListener('click',()=>{cursor=null;zoomAt(1/1.4);});
 document.querySelector('#reset').addEventListener('click',fit);
 unpinButton.addEventListener('click',()=>{pinnedPosition=null;cursor=null;clearMarkerSelection();scheduleDraw();});
-function toggleLayers(open){mapBody.classList.toggle('sidebar-collapsed',!open);layersPanel.inert=!open;layersPanel.setAttribute('aria-hidden',String(!open));layersToggle.setAttribute('aria-expanded',String(open));if(open)markerSearch.focus();else layersToggle.focus();resize();}
-layersToggle.addEventListener('click',()=>toggleLayers(true));
+function toggleLayers(open){
+  mapBody.classList.toggle('sidebar-collapsed',!open);
+  layersPanel.inert=!open;
+  layersPanel.setAttribute('aria-hidden',String(!open));
+  sidebarBackdrop.hidden=!open;
+  layersToggle.setAttribute('aria-expanded',String(open));
+  layersToggle.setAttribute('aria-label',open?'Collapse location sidebar':'Expand location sidebar');
+  layersToggle.title=open?'Collapse locations':'Expand locations';
+  if(open&&!window.matchMedia('(max-width:700px)').matches)markerSearch.focus();
+  else if(!open)layersToggle.focus();
+  resize();
+}
+layersToggle.addEventListener('click',()=>toggleLayers(mapBody.classList.contains('sidebar-collapsed')));
 document.querySelector('#layers-close').addEventListener('click',()=>toggleLayers(false));
+sidebarBackdrop.addEventListener('click',()=>toggleLayers(false));
 document.querySelector('#layers-all').addEventListener('click',()=>{for(const category of markerCategories)activeCategories.add(category.id);updateLayerControls();scheduleDraw();});
 document.querySelector('#layers-none').addEventListener('click',()=>{activeCategories.clear();updateLayerControls();scheduleDraw();});
 markerSearch.addEventListener('input',()=>{searchTerm=markerSearch.value.trim().toLowerCase();updateLayerSummary();scheduleDraw();});
