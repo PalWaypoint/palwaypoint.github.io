@@ -39,6 +39,14 @@ Numbered roster reference and game portraits, already imported for the tracker.
 Palworld names, descriptions and underlying game artwork belong to Pocketpair.
 Source repository licenses do not transfer ownership of game artwork.
 
+Item artwork: independently extracted Arkive game resources,
+https://resource-palworld.tc-imba.com/icons/ (imported September 30, 2026).
+The source URL for each item is recorded in icons/item-art/sources.json.
+Original WebP bytes are preserved; identical portraits share a local file in
+icons/item-art/. Palworld item artwork belongs to Pocketpair. No artwork or
+item unlock data was taken from PalMap. Schematic and technology relationships
+come from Arkive's extracted recipes, blueprint unlocks and technology tables.
+
 Checklist locations come from the existing PalWaypoint map catalog. Its legacy
 and independent source attributions remain in MARKER-DATA-LICENSE.txt.
 PalMap is a feature reference, not a source for new wiki game tables or prose.
