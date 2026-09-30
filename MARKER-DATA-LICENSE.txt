@@ -40,3 +40,9 @@ open-source license for the game data or icon artwork.
 
 PalDex's repository license covers its program code. This notice does not
 assert that the extracted Palworld data or artwork is MIT-licensed.
+
+Pal capture tracker roster: numbered Pals from https://paldb.cc/en/Pals, retrieved September 30, 2026. Names and deck identifiers are game facts. Sphere controls are original CSS artwork.
+
+Capture tracker portraits: Palworld game artwork, retrieved from the portrait URLs on https://paldb.cc/en/Pals on September 30, 2026. Artwork belongs to Pocketpair.
+
+Surface region geometry and English names: Arkive, copyright Yihao Liu (tc-imba), game-extracted datasets licensed CC BY-NC 4.0 (https://creativecommons.org/licenses/by-nc/4.0/). Source: https://data-palworld.tc-imba.com/regions/MainWorld.json and locales/en-US/regions/MainWorld.json. Retrieved September 30, 2026. Modified by PalWaypoint: retained surface regions and rescaled 8192-pixel coordinates to 4096 pixels. Source extraction documented at https://github.com/arkive-games/arkive/blob/master/docs/superpowers/specs/2026-07-16-palworld-map-regions-design.md . Region names and underlying game geometry originate in Palworld, copyright Pocketpair.

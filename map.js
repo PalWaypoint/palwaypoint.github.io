@@ -1,7 +1,9 @@
 import {pixelToGame, screenToPixel} from './coordinates.js';
 import {mapConfigs} from './map-config.js?v=independent-camps-1';
 import {TerrainElevation} from './elevation.js';
-import {loadMarkers,loadCategories,markerCategories,categoryById} from './markers.js?v=palwaypoint-icons-1';
+import {loadMarkers,loadCategories,markerCategories,categoryById,initCaptureTracker,regionAtPixel} from './markers.js?v=capture-regions-1';
+
+initCaptureTracker();
 
 const canvas = document.querySelector('#map');
 const context = canvas.getContext('2d');
@@ -22,6 +24,8 @@ const layerList=document.querySelector('#layer-list');
 const layerStatus=document.querySelector('#layer-status');
 const markerSearch=document.querySelector('#marker-search');
 const markerTooltip=document.querySelector('#marker-tooltip');
+const regionBanner=document.querySelector('#region-banner');
+let regionCursor=null;
 const markerDetail=document.querySelector('#marker-detail');
 const markerLoot=document.querySelector('#marker-loot');
 const markerProgressControl=document.querySelector('#marker-progress-control');
@@ -294,6 +298,9 @@ function draw(){
   controls[0].disabled=camera.scale>=fitScale*12-.00001;
   controls[1].disabled=camera.scale<=fitScale*.5+.00001;
   updateReadout();
+  const region=regionCursor?regionAtPixel(screenToPixel(regionCursor.x,regionCursor.y,camera),currentMap.name):null;
+  regionBanner.hidden=!region;
+  if(region&&regionBanner.textContent!==region.name)regionBanner.textContent=region.name;
 }
 function fit(){
   if(!loaded)return;
@@ -330,6 +337,7 @@ canvas.addEventListener('pointerdown',event=>{
 canvas.addEventListener('pointermove',event=>{
   if(!loaded)return;
   const point=position(event);const previous=pointers.get(event.pointerId);
+  regionCursor=event.pointerType==='touch'?null:point;
   if(previous){
     if(pressStart&&Math.hypot(point.x-pressStart.x,point.y-pressStart.y)>6)pressMoved=true;
     pointers.set(event.pointerId,point);
@@ -353,8 +361,8 @@ function endPointer(event){
 }
 for(const name of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(name,endPointer);
 // Retain the last hover destination while the pointer moves to the Copy button.
-canvas.addEventListener('pointerleave',()=>{markerTooltip.hidden=true;if(!pointers.size)scheduleDraw();});
-canvas.addEventListener('wheel',event=>{event.preventDefault();const point=position(event);cursor=point;zoomAt(Math.exp(-Math.max(-100,Math.min(100,event.deltaY))*.003),point);},{passive:false});
+canvas.addEventListener('pointerleave',()=>{regionCursor=null;regionBanner.hidden=true;markerTooltip.hidden=true;if(!pointers.size)scheduleDraw();});
+canvas.addEventListener('wheel',event=>{event.preventDefault();const point=position(event);cursor=point;regionCursor=point;zoomAt(Math.exp(-Math.max(-100,Math.min(100,event.deltaY))*.003),point);},{passive:false});
 canvas.addEventListener('keydown',event=>{
   if(!loaded)return;
   if(event.key==='Escape'){event.preventDefault();pinnedPosition=null;cursor=null;clearMarkerSelection();scheduleDraw();return;}
@@ -409,7 +417,7 @@ image.onerror=()=>{loaded=false;loading.hidden=true;error.hidden=false;controls.
 async function switchMap(key){
   if(!mapConfigs[key]||currentMap===mapConfigs[key])return;
   currentMap=mapConfigs[key];const generation=++mapGeneration;
-  markers=[];visibleMarkers=[];markerHits=[];pinnedPosition=null;cursor=null;clearMarkerSelection();markerTooltip.hidden=true;
+  markers=[];visibleMarkers=[];markerHits=[];pinnedPosition=null;cursor=null;regionCursor=null;regionBanner.hidden=true;clearMarkerSelection();markerTooltip.hidden=true;
   elevation=new TerrainElevation(()=>{if(loaded)updateReadout();},currentMap.terrain);
   document.querySelector('#map-name').textContent=currentMap.name.toUpperCase();
   document.querySelector('#source-link').href=currentMap.sourceUrl;
