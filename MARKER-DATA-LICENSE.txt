@@ -5,6 +5,9 @@ the public game-data export at https://palmap.app/ (snapshot downloaded
 September 30, 2026). PalMap describes its data extraction and game-artwork
 attribution at https://palmap.app/about.
 
+Chest loot previews and item icons are adapted from PalMap's public chest-tip
+data at https://palmap.app/chest-loot (snapshot downloaded September 30, 2026).
+
 These files are game-derived reference data and artwork. Palworld and its
 artwork belong to Pocketpair, Inc. PalWaypoint is an unofficial fan map and
 is not affiliated with Pocketpair or PalMap. This notice does not assert an

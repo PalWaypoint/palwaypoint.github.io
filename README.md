@@ -12,6 +12,12 @@ The collapsible Locations sidebar has 77 marker types across both maps in nine g
 
 The 14,011 Palpagos Islands and 379 World Tree marker positions, labels, type list, and icons are adapted from the public [PalMap game-data export](https://palmap.app/about), downloaded September 30, 2026. Marker positions are static references, not a live view of dungeon availability, NPC movement, or your personal save progress. The earlier PalDex-derived 1,228/97 marker set was replaced; the new data is not claimed to be covered by PalDex's MIT license. See `MARKER-DATA-LICENSE.txt` for attribution. Location pins retain the existing terrain-height caveats described below.
 
+## Progress and chest loot
+
+Selecting a fast travel point, watchtower, boss tower, Skyland warp altar, Alpha Pal, bounty, ancient ruin, journal, effigy, or dungeon shows an appropriately labelled status checkbox. Progress is saved in this browser's local storage and stays on this device; clearing browser data removes it. The sidebar shows completed/total counts for trackable types and can hide completed pins. Progress is per map location, not a connection to a Palworld save or server.
+
+Chest details show the top possible items, approximate drop percentages per opening, tier and estimated respawn time from [PalMap's chest-tip export](https://palmap.app/chest-loot). These percentages describe item drops, not the probability that a chest appears at the location. The source does not give that latter probability. Chest details and item icons are bundled locally with the site.
+
 ## Calibration and attribution
 
 The main-world and World Tree textures come from [Void Possum / PalMap](https://github.com/voidpossum/PalMap/tree/af430c078675083b59408a00efb9c4bd911db5d4), sources `app/data/T_WorldMap.png` and `app/data/T_TreeMap.png`. Both were uniformly reduced from 8192×8192 to 4096×4096 without cropping. Palworld artwork belongs to Pocketpair, Inc. PalMap credits PalDB for coordinate conversion research. No PalMap program code was copied.

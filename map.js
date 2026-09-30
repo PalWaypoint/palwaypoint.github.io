@@ -23,10 +23,24 @@ const layerStatus=document.querySelector('#layer-status');
 const markerSearch=document.querySelector('#marker-search');
 const markerTooltip=document.querySelector('#marker-tooltip');
 const markerDetail=document.querySelector('#marker-detail');
+const markerLoot=document.querySelector('#marker-loot');
+const markerProgressControl=document.querySelector('#marker-progress-control');
+const markerProgressCheckbox=document.querySelector('#marker-progress-checkbox');
+const markerProgressLabel=document.querySelector('#marker-progress-label');
+const markerProgressNote=document.querySelector('#marker-progress-note');
+const hideCompletedCheckbox=document.querySelector('#hide-completed');
+const progressStorageKey='palwaypoint-progress-v1';
+const hideCompletedStorageKey='palwaypoint-hide-completed-v1';
+function readProgress(){try{const value=JSON.parse(localStorage.getItem(progressStorageKey)||'[]');return new Set(Array.isArray(value)?value:[]);}catch{return new Set();}}
+const completedMarkers=readProgress();
+let hideCompleted=false;
+try{hideCompleted=localStorage.getItem(hideCompletedStorageKey)==='true';}catch{}
+hideCompletedCheckbox.checked=hideCompleted;
 const activeCategories=new Set(['Fast Travel']);
 const expandedGroups=new Set(['Collectibles']);
 const iconCache=new Map();
 let markers=[],visibleMarkers=[],markerHits=[],selectedMarker=null,hoveredMarker=null,searchTerm='';
+let chestTipsPromise=null;
 let teleportText='';
 let copyResetTimer=0;
 const teleportClearanceCm=150;
@@ -48,8 +62,21 @@ function scheduleDraw(){if(!frame)frame=requestAnimationFrame(()=>{frame=0;draw(
 function position(event){const rect=canvas.getBoundingClientRect();return {x:event.clientX-rect.left,y:event.clientY-rect.top};}
 function onMap(point){return point.x>=0&&point.y>=0&&point.x<=image.naturalWidth&&point.y<=image.naturalHeight;}
 function decimal(value){return (Math.abs(value)<.005?0:value).toFixed(2);}
+function isTrackable(marker){return marker.category==='Dungeon'||!!categoryById.get(marker.category)?.trackable;}
+function progressLabel(category){
+  if(category==='Fast Travel')return 'Unlocked';
+  if(['Watchtower','Skyland Warp Altar'].includes(category))return 'Activated';
+  if(category==='Bounty')return 'Defeated';
+  if(category==='Journals'||category.endsWith('Effigy'))return 'Collected';
+  return 'Cleared';
+}
+function saveProgress(){
+  try{localStorage.setItem(progressStorageKey,JSON.stringify([...completedMarkers]));markerProgressNote.textContent='Saved on this device.';}
+  catch{markerProgressNote.textContent='Could not save progress in this browser.';}
+}
 function markerMatches(marker){
   if(!activeCategories.has(marker.category))return false;
+  if(hideCompleted&&completedMarkers.has(marker.id))return false;
   if(!searchTerm)return true;
   const category=categoryById.get(marker.category);
   return `${marker.name} ${marker.detail} ${category?.name} ${category?.group}`.toLowerCase().includes(searchTerm);
@@ -65,7 +92,11 @@ function markerIcon(path){
 }
 function updateLayerControls(){
   const counts=new Map(markerCategories.map(category=>[category.id,0]));
-  for(const marker of markers)counts.set(marker.category,(counts.get(marker.category)||0)+1);
+  const doneCounts=new Map(markerCategories.map(category=>[category.id,0]));
+  for(const marker of markers){
+    counts.set(marker.category,(counts.get(marker.category)||0)+1);
+    if(completedMarkers.has(marker.id))doneCounts.set(marker.category,(doneCounts.get(marker.category)||0)+1);
+  }
   layerList.replaceChildren();
   const groups=new Map();
   for(const category of markerCategories){
@@ -83,7 +114,10 @@ function updateLayerControls(){
     const open=expandedGroups.has(group)||!!searchTerm;expand.setAttribute('aria-expanded',String(open));
     const body=document.createElement('div');body.className='layer-group-body';body.hidden=!open;
     expand.addEventListener('click',()=>{body.hidden=!body.hidden;expand.setAttribute('aria-expanded',String(!body.hidden));body.hidden?expandedGroups.delete(group):expandedGroups.add(group);});
-    const count=document.createElement('span');count.className='layer-group-count';count.textContent=categories.reduce((sum,category)=>sum+counts.get(category.id),0).toLocaleString('en-US');
+    const count=document.createElement('span');count.className='layer-group-count';
+    const groupTotal=categories.reduce((sum,category)=>sum+counts.get(category.id),0);
+    const groupDone=categories.reduce((sum,category)=>sum+doneCounts.get(category.id),0);
+    count.textContent=group==='Collectibles'?`${groupDone.toLocaleString('en-US')}/${groupTotal.toLocaleString('en-US')}`:groupTotal.toLocaleString('en-US');
     const all=document.createElement('input');all.type='checkbox';all.className='layer-group-toggle';all.checked=categories.every(category=>activeCategories.has(category.id));all.indeterminate=!all.checked&&categories.some(category=>activeCategories.has(category.id));all.setAttribute('aria-label',`Show all ${group} markers`);
     all.addEventListener('change',()=>{for(const category of categories)all.checked?activeCategories.add(category.id):activeCategories.delete(category.id);updateLayerControls();refreshVisibleMarkers();});
     header.append(expand,count,all);section.append(header,body);
@@ -93,7 +127,7 @@ function updateLayerControls(){
       checkbox.addEventListener('change',()=>{checkbox.checked?activeCategories.add(category.id):activeCategories.delete(category.id);updateLayerControls();refreshVisibleMarkers();});
       const icon=document.createElement('img');icon.className='layer-icon';icon.src=category.icon;icon.alt='';icon.loading='lazy';
       const name=document.createElement('span');name.className='layer-name';name.textContent=category.name;
-      const itemCount=document.createElement('span');itemCount.className='layer-count';itemCount.textContent=counts.get(category.id).toLocaleString('en-US');
+      const itemCount=document.createElement('span');itemCount.className='layer-count';itemCount.textContent=(category.trackable||category.id==='Dungeon')?`${doneCounts.get(category.id).toLocaleString('en-US')}/${counts.get(category.id).toLocaleString('en-US')}`:counts.get(category.id).toLocaleString('en-US');
       row.append(checkbox,icon,name,itemCount);body.append(row);
     }
     layerList.append(section);
@@ -120,6 +154,8 @@ function drawMarkers(){
   for(const cell of cells.values()){
     const count=cell.markers.length,x=cell.x/count,y=cell.y/count,cluster=count>1,r=cluster?16:14;
     const category=categoryById.get(cell.markers[0].category);
+    const completed=!cluster&&completedMarkers.has(cell.markers[0].id);
+    context.globalAlpha=completed ? .55 : 1;
     context.shadowColor='#07151c';context.shadowBlur=5;
     context.beginPath();context.arc(x,y,r,0,Math.PI*2);
     context.fillStyle='#112833';context.fill();
@@ -129,7 +165,9 @@ function drawMarkers(){
       const icon=markerIcon(cell.markers[0].icon||category.icon);
       if(icon)context.drawImage(icon,x-12,y-12,24,24);
       else{context.fillStyle='#eef8f4';context.fillText('•',x,y+.5);}
+      if(completed){context.globalAlpha=1;context.beginPath();context.arc(x+10,y+10,8,0,Math.PI*2);context.fillStyle='#68e7cb';context.fill();context.fillStyle='#10242c';context.font='bold 12px Segoe UI,Arial,sans-serif';context.fillText('✓',x+10,y+10);context.font='bold 11px Segoe UI,Arial,sans-serif';}
     }
+    context.globalAlpha=1;
     markerHits.push({x,y,r:r+5,markers:cell.markers});
   }
   context.restore();
@@ -146,15 +184,57 @@ function showMarkerTooltip(point){
   markerTooltip.style.left=`${Math.min(point.x+17,width-190)}px`;
   markerTooltip.style.top=`${Math.max(8,point.y-54)}px`;
 }
+function loadChestTips(){
+  return chestTipsPromise??=fetch('./chest-tips.json').then(response=>{
+    if(!response.ok)throw new Error('Chest loot unavailable');
+    return response.json();
+  });
+}
+function chestNote(text){const note=document.createElement('p');note.className='marker-loot-note';note.textContent=text;return note;}
+async function showChestLoot(marker){
+  markerLoot.replaceChildren();markerLoot.hidden=!marker.loot;
+  if(!marker.loot)return;
+  markerLoot.append(chestNote('Loading possible loot…'));
+  try{
+    const data=await loadChestTips();
+    if(selectedMarker!==marker)return;
+    const tip=data.tips?.[marker.loot];
+    markerLoot.replaceChildren();
+    if(!tip?.items?.length){markerLoot.append(chestNote('Loot details are unavailable for this chest.'));return;}
+    const heading=document.createElement('h3');heading.textContent='Possible loot';markerLoot.append(heading);
+    const pool=document.createElement('p');pool.className='marker-loot-pool';pool.textContent=tip.label;markerLoot.append(pool);
+    const list=document.createElement('ul');list.className='marker-loot-list';
+    for(const item of tip.items){
+      const row=document.createElement('li');
+      if(item.icon){const icon=document.createElement('img');icon.src=item.icon;icon.alt='';icon.loading='lazy';row.append(icon);}
+      const name=document.createElement('span');name.textContent=item.name;
+      const chance=document.createElement('strong');chance.textContent=`~${item.pct}%`;
+      row.append(name,chance);list.append(row);
+    }
+    markerLoot.append(list);
+    if(tip.money)markerLoot.append(chestNote(`Gold Coins ×${tip.money.min.toLocaleString('en-US')}–${tip.money.max.toLocaleString('en-US')} on every opening`));
+    if(tip.tier)markerLoot.append(chestNote(`Spawns up to a ${tip.tier}-tier chest`));
+    if(tip.respawn)markerLoot.append(chestNote(`Estimated respawn: ${tip.respawn}`));
+    markerLoot.append(chestNote('Percentages estimate item drops per opening. The chance of a chest appearing at this location is not available.'));
+    const source=document.createElement('a');source.href='https://palmap.app/chest-loot';source.target='_blank';source.rel='noopener noreferrer';source.textContent='Full loot tables';markerLoot.append(source);
+  }catch{
+    if(selectedMarker===marker){markerLoot.replaceChildren(chestNote('Chest loot could not load.'));}
+  }
+}
 function selectMarker(marker){
   selectedMarker=marker;pinnedPosition=marker.pixel;cursor=null;
   markerDetail.hidden=false;
   document.querySelector('#marker-detail-dot').src=marker.icon||categoryById.get(marker.category).icon;
   document.querySelector('#marker-detail-name').textContent=marker.name;
   document.querySelector('#marker-detail-type').textContent=`${categoryById.get(marker.category).name}${marker.detail?` · ${marker.detail}`:''}${marker.level?` · Lv ${marker.level}`:''}`;
+  document.querySelector('#marker-detail-coordinates').textContent=`X ${decimal(marker.gameX)} · Y ${decimal(marker.gameY)}`;
+  const trackable=isTrackable(marker);
+  markerProgressControl.hidden=!trackable;markerProgressNote.hidden=!trackable;
+  if(trackable){markerProgressCheckbox.checked=completedMarkers.has(marker.id);markerProgressLabel.textContent=progressLabel(marker.category);}
+  showChestLoot(marker);
   markerTooltip.hidden=true;scheduleDraw();
 }
-function clearMarkerSelection(){selectedMarker=null;markerDetail.hidden=true;}
+function clearMarkerSelection(){selectedMarker=null;markerDetail.hidden=true;markerLoot.hidden=true;}
 function readCoordinates(x,y,label){
   const point=screenToPixel(x,y,camera);
   const valid=loaded&&onMap(point);
@@ -300,8 +380,16 @@ document.querySelector('#layers-close').addEventListener('click',()=>toggleLayer
 sidebarBackdrop.addEventListener('click',()=>toggleLayers(false));
 document.querySelector('#layers-all').addEventListener('click',()=>{for(const marker of markers)activeCategories.add(marker.category);updateLayerControls();refreshVisibleMarkers();});
 document.querySelector('#layers-none').addEventListener('click',()=>{for(const marker of markers)activeCategories.delete(marker.category);updateLayerControls();refreshVisibleMarkers();});
+hideCompletedCheckbox.addEventListener('change',()=>{hideCompleted=hideCompletedCheckbox.checked;try{localStorage.setItem(hideCompletedStorageKey,String(hideCompleted));}catch{}refreshVisibleMarkers();});
 markerSearch.addEventListener('input',()=>{searchTerm=markerSearch.value.trim().toLowerCase();updateLayerControls();refreshVisibleMarkers();});
 layersPanel.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();toggleLayers(false);}});
+markerProgressCheckbox.addEventListener('change',()=>{
+  if(!selectedMarker||!isTrackable(selectedMarker))return;
+  if(markerProgressCheckbox.checked)completedMarkers.add(selectedMarker.id);
+  else completedMarkers.delete(selectedMarker.id);
+  saveProgress();updateLayerControls();refreshVisibleMarkers();
+});
+document.querySelector('#marker-detail-close').addEventListener('click',clearMarkerSelection);
 copyTeleport.addEventListener('click',async()=>{
   if(!teleportText)return;
   const copied=teleportText;

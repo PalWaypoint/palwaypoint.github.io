@@ -23,6 +23,7 @@
         <label class="layers-search-label" for="marker-search">Find a location</label>
         <input id="marker-search" type="search" placeholder="Search by name or type" autocomplete="off">
         <div class="layers-actions"><button id="layers-all" type="button">Show all</button><button id="layers-none" type="button">Hide all</button></div>
+        <label class="hide-completed"><input id="hide-completed" type="checkbox">Hide completed locations</label>
         <div id="layer-list" class="layer-list"></div>
         <p id="layer-status" class="layer-status" role="status">Loading locations…</p>
       </aside>
@@ -34,6 +35,13 @@
       <nav class="map-switcher" aria-label="Choose map"><button type="button" data-map="islands" aria-pressed="true">Palpagos Islands</button><button type="button" data-map="tree" aria-pressed="false">World Tree</button></nav>
       <div class="compass" aria-hidden="true"><span>N</span><svg viewBox="0 0 20 30"><path d="M10 1L18 26 10 20 2 26Z"/></svg></div>
       <div id="marker-tooltip" class="marker-tooltip" hidden></div>
+      <aside id="marker-detail" class="marker-detail" aria-label="Location details" hidden>
+        <div class="marker-detail-heading"><img id="marker-detail-dot" class="marker-detail-dot" alt=""><div><strong id="marker-detail-name"></strong><span id="marker-detail-type"></span></div><button id="marker-detail-close" type="button" aria-label="Close location details">×</button></div>
+        <p id="marker-detail-coordinates" class="marker-detail-coordinates"></p>
+        <label id="marker-progress-control" class="marker-progress-control" hidden><input id="marker-progress-checkbox" type="checkbox"><span id="marker-progress-label">Cleared</span></label>
+        <p id="marker-progress-note" class="marker-progress-note" hidden>Saved on this device.</p>
+        <div id="marker-loot" class="marker-loot" hidden></div>
+      </aside>
       <nav class="map-controls" aria-label="Map controls">
         <button id="zoom-in" type="button" aria-label="Zoom in" title="Zoom in (+)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
         <button id="zoom-out" type="button" aria-label="Zoom out" title="Zoom out (−)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></button>
@@ -42,7 +50,6 @@
         <span id="zoom-label" class="zoom-label">100%</span>
       </nav>
       <div class="coordinate-panel">
-        <div id="marker-detail" class="marker-detail" hidden><img id="marker-detail-dot" class="marker-detail-dot" alt=""><div><strong id="marker-detail-name"></strong><span id="marker-detail-type"></span></div></div>
         <p class="coordinate-caption"><span class="tiny-crosshair" aria-hidden="true">+</span><span id="coordinate-source">CENTER OF VIEW</span><button id="unpin" type="button" aria-label="Resume mouse coordinates" hidden>Unpin</button></p>
         <div class="coordinate-pair" aria-label="In-game map coordinates"><div><span class="axis">X</span><output id="coord-x" aria-live="off">—</output></div><span class="pair-divider"></span><div><span class="axis">Y</span><output id="coord-y" aria-live="off">—</output></div></div>
         <p class="coordinate-note">IN-GAME COORDINATES</p>
