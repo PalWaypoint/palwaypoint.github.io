@@ -23,7 +23,7 @@ const treeTerrain = {minX:347351.5,maxX:689148.5,minY:-818197,maxY:-476400,path:
 export const mapConfigs = {
   islands: {
     name: 'Palpagos Islands',
-    image: './world-map.webp',
+    image: './world-map.webp?v=paldex-map-1',
     markers: './markers.json',
     terrain: islandsTerrain,
     sourceUrl,
@@ -31,7 +31,7 @@ export const mapConfigs = {
   },
   tree: {
     name: 'World Tree',
-    image: './tree-map.webp',
+    image: './tree-map.webp?v=paldex-map-1',
     markers: './tree-markers.json',
     terrain: treeTerrain,
     sourceUrl,

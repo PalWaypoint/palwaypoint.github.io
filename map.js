@@ -1,5 +1,5 @@
 import {pixelToGame, screenToPixel} from './coordinates.js';
-import {mapConfigs} from './map-config.js';
+import {mapConfigs} from './map-config.js?v=paldex-map-1';
 import {TerrainElevation} from './elevation.js';
 import {loadMarkers,loadCategories,markerCategories,categoryById} from './markers.js';
 
