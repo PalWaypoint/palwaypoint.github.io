@@ -1,6 +1,7 @@
 import {pixelToGame, screenToPixel} from './coordinates.js';
 import {mapConfig} from './map-config.js';
 import {TerrainElevation} from './elevation.js';
+import {loadMarkers,markerCategories,categoryById} from './markers.js';
 
 const canvas = document.querySelector('#map');
 const context = canvas.getContext('2d');
@@ -12,6 +13,15 @@ const teleportCommand = document.querySelector('#tp-command');
 const teleportNote = document.querySelector('#teleport-note');
 const copyTeleport = document.querySelector('#copy-tp');
 const unpinButton = document.querySelector('#unpin');
+const layersToggle=document.querySelector('#layers-toggle');
+const layersPanel=document.querySelector('#layers-panel');
+const layerList=document.querySelector('#layer-list');
+const layerStatus=document.querySelector('#layer-status');
+const markerSearch=document.querySelector('#marker-search');
+const markerTooltip=document.querySelector('#marker-tooltip');
+const markerDetail=document.querySelector('#marker-detail');
+const activeCategories=new Set(markerCategories.filter(category=>category.defaultOn).map(category=>category.id));
+let markers=[],markerHits=[],selectedMarker=null,hoveredMarker=null,searchTerm='';
 let teleportText='';
 let copyResetTimer=0;
 const teleportClearanceCm=150;
@@ -31,6 +41,73 @@ function scheduleDraw(){if(!frame)frame=requestAnimationFrame(()=>{frame=0;draw(
 function position(event){const rect=canvas.getBoundingClientRect();return {x:event.clientX-rect.left,y:event.clientY-rect.top};}
 function onMap(point){return point.x>=0&&point.y>=0&&point.x<=image.naturalWidth&&point.y<=image.naturalHeight;}
 function decimal(value){return (Math.abs(value)<.005?0:value).toFixed(2);}
+function markerMatches(marker){return activeCategories.has(marker.category)&&(!searchTerm||`${marker.name} ${marker.detail} ${categoryById.get(marker.category)?.name}`.toLowerCase().includes(searchTerm));}
+function updateLayerControls(){
+  const counts=new Map(markerCategories.map(category=>[category.id,0]));
+  for(const marker of markers)counts.set(marker.category,(counts.get(marker.category)||0)+1);
+  layerList.replaceChildren();
+  for(const category of markerCategories){
+    const row=document.createElement('label');row.className='layer-row';
+    const checkbox=document.createElement('input');checkbox.type='checkbox';checkbox.checked=activeCategories.has(category.id);checkbox.setAttribute('aria-label',category.name);
+    checkbox.addEventListener('change',()=>{checkbox.checked?activeCategories.add(category.id):activeCategories.delete(category.id);updateLayerSummary();scheduleDraw();});
+    const dot=document.createElement('span');dot.className='layer-dot';dot.style.backgroundColor=category.color;dot.setAttribute('aria-hidden','true');
+    const name=document.createElement('span');name.className='layer-name';name.textContent=category.name;
+    const count=document.createElement('span');count.className='layer-count';count.textContent=counts.get(category.id).toLocaleString('en-US');
+    row.append(checkbox,dot,name,count);layerList.append(row);
+  }
+  updateLayerSummary();
+}
+function updateLayerSummary(){
+  const count=markers.filter(markerMatches).length;
+  document.querySelector('#layers-count').textContent=count.toLocaleString('en-US');
+  layerStatus.textContent=markers.length?`${count.toLocaleString('en-US')} of ${markers.length.toLocaleString('en-US')} main-world locations shown. Click a pin for coordinates.`:'No locations loaded.';
+}
+function drawMarkers(){
+  markerHits=[];
+  if(!markers.length)return;
+  const cells=new Map(),cellSize=42;
+  for(const marker of markers){
+    if(!markerMatches(marker))continue;
+    const x=camera.x+marker.pixel.x*camera.scale,y=camera.y+marker.pixel.y*camera.scale;
+    if(x< -24||x>width+24||y< -24||y>height+24)continue;
+    const key=`${Math.floor(x/cellSize)},${Math.floor(y/cellSize)}`;
+    let cell=cells.get(key);if(!cell){cell={x:0,y:0,markers:[]};cells.set(key,cell);}
+    cell.x+=x;cell.y+=y;cell.markers.push(marker);
+  }
+  context.save();context.textAlign='center';context.textBaseline='middle';context.font='bold 11px Segoe UI,Arial,sans-serif';
+  for(const cell of cells.values()){
+    const count=cell.markers.length,x=cell.x/count,y=cell.y/count,cluster=count>1,r=cluster?16:12;
+    const category=categoryById.get(cell.markers[0].category);
+    context.shadowColor='#07151c';context.shadowBlur=5;
+    context.beginPath();context.arc(x,y,r,0,Math.PI*2);
+    context.fillStyle=cluster?'#112833':category.color;context.fill();
+    context.shadowBlur=0;context.strokeStyle=cluster?'#c7e5e7':'#eef8f4';context.lineWidth=2;context.stroke();
+    context.fillStyle=cluster?'#eef8f4':'#10242c';context.fillText(cluster?(count>99?'99+':String(count)):category.glyph,x,y+.5);
+    markerHits.push({x,y,r:r+5,markers:cell.markers});
+  }
+  context.restore();
+}
+function markerHit(point){for(let i=markerHits.length-1;i>=0;i--){const hit=markerHits[i];if(Math.hypot(point.x-hit.x,point.y-hit.y)<=hit.r)return hit;}return null;}
+function showMarkerTooltip(point){
+  const hit=markerHit(point);
+  hoveredMarker=hit?.markers.length===1?hit.markers[0]:null;
+  if(!hit){markerTooltip.hidden=true;return;}
+  markerTooltip.replaceChildren();
+  const title=document.createElement('strong');title.textContent=hit.markers.length===1?hit.markers[0].name:`${hit.markers.length} locations`;
+  const subtitle=document.createElement('span');subtitle.textContent=hit.markers.length===1?categoryById.get(hit.markers[0].category).name:'Click to zoom in';
+  markerTooltip.append(title,subtitle);markerTooltip.hidden=false;
+  markerTooltip.style.left=`${Math.min(point.x+17,width-190)}px`;
+  markerTooltip.style.top=`${Math.max(8,point.y-54)}px`;
+}
+function selectMarker(marker){
+  selectedMarker=marker;pinnedPosition=marker.pixel;cursor=null;
+  markerDetail.hidden=false;
+  document.querySelector('#marker-detail-dot').style.backgroundColor=categoryById.get(marker.category).color;
+  document.querySelector('#marker-detail-name').textContent=marker.name;
+  document.querySelector('#marker-detail-type').textContent=`${categoryById.get(marker.category).name}${marker.detail?` · ${marker.detail}`:''}`;
+  markerTooltip.hidden=true;scheduleDraw();
+}
+function clearMarkerSelection(){selectedMarker=null;markerDetail.hidden=true;}
 function readCoordinates(x,y,label){
   const point=screenToPixel(x,y,camera);
   const valid=loaded&&onMap(point);
@@ -58,7 +135,7 @@ function readCoordinates(x,y,label){
 function updateReadout(){
   unpinButton.hidden=!pinnedPosition;
   const point=pinnedPosition?{x:camera.x+pinnedPosition.x*camera.scale,y:camera.y+pinnedPosition.y*camera.scale}:cursor??{x:width/2,y:height/2};
-  readCoordinates(point.x,point.y,pinnedPosition?'PINNED POSITION':cursor?'CURSOR POSITION':'CENTER OF VIEW');
+  readCoordinates(point.x,point.y,selectedMarker?'LOCATION MARKER':pinnedPosition?'PINNED POSITION':cursor?'CURSOR POSITION':'CENTER OF VIEW');
 }
 function constrain(){
   const margin=60;
@@ -71,6 +148,7 @@ function draw(){
   context.imageSmoothingEnabled=true;
   context.imageSmoothingQuality='high';
   context.drawImage(image,camera.x,camera.y,image.naturalWidth*camera.scale,image.naturalHeight*camera.scale);
+  drawMarkers();
   const crosshair=pinnedPosition?{x:camera.x+pinnedPosition.x*camera.scale,y:camera.y+pinnedPosition.y*camera.scale}:cursor;
   if(crosshair&&onMap(screenToPixel(crosshair.x,crosshair.y,camera))){
     context.save();context.strokeStyle='#68e7cb';context.lineWidth=1;
@@ -89,7 +167,7 @@ function fit(){
   if(!loaded)return;
   fitScale=Math.min((width-24)/image.naturalWidth,(height-24)/image.naturalHeight);
   camera.scale=fitScale;camera.x=(width-image.naturalWidth*camera.scale)/2;camera.y=(height-image.naturalHeight*camera.scale)/2;
-  cursor=null;pinnedPosition=null;scheduleDraw();
+  cursor=null;pinnedPosition=null;clearMarkerSelection();scheduleDraw();
 }
 function resize(){
   const rect=canvas.getBoundingClientRect();
@@ -123,29 +201,31 @@ canvas.addEventListener('pointermove',event=>{
   if(previous){
     if(pressStart&&Math.hypot(point.x-pressStart.x,point.y-pressStart.y)>6)pressMoved=true;
     pointers.set(event.pointerId,point);
-    if(pointers.size===1){camera.x+=point.x-previous.x;camera.y+=point.y-previous.y;constrain();cursor=point;}
+    if(pointers.size===1){camera.x+=point.x-previous.x;camera.y+=point.y-previous.y;constrain();cursor=point;markerTooltip.hidden=true;}
     else if(pointers.size>=2){const next=pinchState();if(lastPinch&&lastPinch.distance>0){zoomAt(next.distance/lastPinch.distance,lastPinch);camera.x+=next.x-lastPinch.x;camera.y+=next.y-lastPinch.y;constrain();}lastPinch=next;cursor=null;}
-  }else if(event.pointerType!=='touch')cursor=point;
+  }else if(event.pointerType!=='touch'){cursor=point;showMarkerTooltip(point);}
   scheduleDraw();
 });
 function endPointer(event){
   if(event.type==='pointerup'&&pointers.size===1&&pressStart&&!pressMoved){
-    const pixel=screenToPixel(position(event).x,position(event).y,camera);
-    if(onMap(pixel)){pinnedPosition=pixel;scheduleDraw();}
+    const at=position(event),hit=markerHit(at);
+    if(hit?.markers.length===1)selectMarker(hit.markers[0]);
+    else if(hit?.markers.length>1){markerTooltip.hidden=true;zoomAt(2,at);}
+    else{const pixel=screenToPixel(at.x,at.y,camera);if(onMap(pixel)){clearMarkerSelection();pinnedPosition=pixel;scheduleDraw();}}
   }
   pointers.delete(event.pointerId);lastPinch=null;
   pressStart=null;
   if(!pointers.size)canvas.classList.remove('dragging');
   if(pointers.size>=2)lastPinch=pinchState();
-  if(event.type==='pointercancel'){cursor=null;scheduleDraw();}
+  if(event.type==='pointercancel'){cursor=null;markerTooltip.hidden=true;scheduleDraw();}
 }
 for(const name of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(name,endPointer);
 // Retain the last hover destination while the pointer moves to the Copy button.
-canvas.addEventListener('pointerleave',()=>{if(!pointers.size)scheduleDraw();});
+canvas.addEventListener('pointerleave',()=>{markerTooltip.hidden=true;if(!pointers.size)scheduleDraw();});
 canvas.addEventListener('wheel',event=>{event.preventDefault();const point=position(event);cursor=point;zoomAt(Math.exp(-Math.max(-100,Math.min(100,event.deltaY))*.003),point);},{passive:false});
 canvas.addEventListener('keydown',event=>{
   if(!loaded)return;
-  if(event.key==='Escape'){event.preventDefault();pinnedPosition=null;cursor=null;scheduleDraw();return;}
+  if(event.key==='Escape'){event.preventDefault();pinnedPosition=null;cursor=null;clearMarkerSelection();scheduleDraw();return;}
   const moves={ArrowLeft:[65,0],ArrowRight:[-65,0],ArrowUp:[0,65],ArrowDown:[0,-65]};
   if(moves[event.key]){event.preventDefault();cursor=null;camera.x+=moves[event.key][0];camera.y+=moves[event.key][1];constrain();draw();}
   else if(['+','=','-','_','Home'].includes(event.key)){event.preventDefault();cursor=null;if(event.key==='Home')fit();else zoomAt(['+','='].includes(event.key)?1.3:1/1.3);draw();}
@@ -155,7 +235,14 @@ canvas.addEventListener('keydown',event=>{
 document.querySelector('#zoom-in').addEventListener('click',()=>{cursor=null;zoomAt(1.4);});
 document.querySelector('#zoom-out').addEventListener('click',()=>{cursor=null;zoomAt(1/1.4);});
 document.querySelector('#reset').addEventListener('click',fit);
-unpinButton.addEventListener('click',()=>{pinnedPosition=null;cursor=null;scheduleDraw();});
+unpinButton.addEventListener('click',()=>{pinnedPosition=null;cursor=null;clearMarkerSelection();scheduleDraw();});
+function toggleLayers(open){layersPanel.hidden=!open;layersToggle.setAttribute('aria-expanded',String(open));if(open)markerSearch.focus();else layersToggle.focus();}
+layersToggle.addEventListener('click',()=>toggleLayers(layersPanel.hidden));
+document.querySelector('#layers-close').addEventListener('click',()=>toggleLayers(false));
+document.querySelector('#layers-all').addEventListener('click',()=>{for(const category of markerCategories)activeCategories.add(category.id);updateLayerControls();scheduleDraw();});
+document.querySelector('#layers-none').addEventListener('click',()=>{activeCategories.clear();updateLayerControls();scheduleDraw();});
+markerSearch.addEventListener('input',()=>{searchTerm=markerSearch.value.trim().toLowerCase();updateLayerSummary();scheduleDraw();});
+layersPanel.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();toggleLayers(false);}});
 copyTeleport.addEventListener('click',async()=>{
   if(!teleportText)return;
   const copied=teleportText;
@@ -170,3 +257,4 @@ image.onerror=()=>{loaded=false;loading.hidden=true;error.hidden=false;controls.
 document.querySelector('#source-link').href=mapConfig.sourceUrl;
 new ResizeObserver(resize).observe(canvas);
 resize();loadImage();
+loadMarkers(mapConfig.calibration).then(data=>{markers=data;updateLayerControls();scheduleDraw();}).catch(()=>{layerStatus.textContent='Location markers could not load. Reload to retry.';document.querySelector('#layers-count').textContent='!';});

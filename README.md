@@ -4,7 +4,13 @@ An unofficial browser map focused on the in-game X/Y coordinates at the pointer,
 
 ## Run locally
 
-Serve `dist/` with any static HTTP server. All runtime assets are local, including the map image; no external map service or JavaScript dependency is required.
+Serve the repository root with any static HTTP server. All runtime assets are local, including the map image and location data; no external map service or JavaScript dependency is required.
+
+## Location layers
+
+The Locations menu offers 12 toggleable categories: fast travel, watchtowers, boss towers, Alpha Pals, bounty targets, oil rigs, dungeons, journals, NPCs, effigies, schematics, and quest locations. Search filters the enabled categories. Nearby pins group into numbered clusters; click a cluster to zoom or a single pin to see its exact in-game X/Y and a copyable PalDefender command.
+
+The 1,228 main-world marker positions and labels are adapted from [PalDex's extracted Palworld data](https://github.com/catrenelle/PalDex/tree/master/data). The compact `markers.json` omits World Tree positions, which use a separate map and coordinate system. Data credits and the source MIT license are in `MARKER-DATA-LICENSE.txt`. Marker positions are static references, not a live view of dungeon availability, NPC movement, or your personal save progress. Location pins retain the existing terrain-height caveats described below.
 
 ## Calibration and attribution
 

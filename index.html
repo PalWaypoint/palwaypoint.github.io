@@ -21,6 +21,16 @@
       <div id="loading" class="loading" role="status"><span class="loading-orbit" aria-hidden="true"></span><p>Opening the islands…</p></div>
       <div id="map-error" class="map-error" role="alert" hidden><h2>The map couldn’t load</h2><p>Check your connection and try again.</p><button id="retry" type="button">Reload map</button></div>
       <div class="compass" aria-hidden="true"><span>N</span><svg viewBox="0 0 20 30"><path d="M10 1L18 26 10 20 2 26Z"/></svg></div>
+      <button id="layers-toggle" class="layers-toggle" type="button" aria-expanded="false" aria-controls="layers-panel">Locations <span id="layers-count">…</span></button>
+      <aside id="layers-panel" class="layers-panel" aria-label="Location layers" hidden>
+        <div class="layers-heading"><strong>Map locations</strong><button id="layers-close" type="button" aria-label="Close location layers">×</button></div>
+        <label class="layers-search-label" for="marker-search">Find a location</label>
+        <input id="marker-search" type="search" placeholder="Search by name or type" autocomplete="off">
+        <div class="layers-actions"><button id="layers-all" type="button">Show all</button><button id="layers-none" type="button">Hide all</button></div>
+        <div id="layer-list" class="layer-list"></div>
+        <p id="layer-status" class="layer-status" role="status">Loading locations…</p>
+      </aside>
+      <div id="marker-tooltip" class="marker-tooltip" hidden></div>
       <nav class="map-controls" aria-label="Map controls">
         <button id="zoom-in" type="button" aria-label="Zoom in" title="Zoom in (+)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
         <button id="zoom-out" type="button" aria-label="Zoom out" title="Zoom out (−)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></button>
@@ -29,6 +39,7 @@
         <span id="zoom-label" class="zoom-label">100%</span>
       </nav>
       <div class="coordinate-panel">
+        <div id="marker-detail" class="marker-detail" hidden><span id="marker-detail-dot" class="marker-detail-dot"></span><div><strong id="marker-detail-name"></strong><span id="marker-detail-type"></span></div></div>
         <p class="coordinate-caption"><span class="tiny-crosshair" aria-hidden="true">+</span><span id="coordinate-source">CENTER OF VIEW</span><button id="unpin" type="button" aria-label="Resume mouse coordinates" hidden>Unpin</button></p>
         <div class="coordinate-pair" aria-label="In-game map coordinates"><div><span class="axis">X</span><output id="coord-x" aria-live="off">—</output></div><span class="pair-divider"></span><div><span class="axis">Y</span><output id="coord-y" aria-live="off">—</output></div></div>
         <p class="coordinate-note">IN-GAME COORDINATES</p>
@@ -40,7 +51,7 @@
       <span id="announcement" class="sr-only" aria-live="polite"></span>
       <div class="map-help" id="help"><span class="desktop-help">Move for coordinates · Click to pin · Drag to pan · Scroll to zoom</span><span class="touch-help">Tap to pin coordinates · Drag to pan · Pinch to zoom</span></div>
     </section>
-    <footer><span>Unofficial fan map · Palworld artwork © Pocketpair</span><span class="source-links"><a id="source-link" href="https://github.com/voidpossum/PalMap" target="_blank" rel="noopener noreferrer">Map &amp; calibration</a><span aria-hidden="true">·</span><a href="https://github.com/oMaN-Rod/palworld-save-pal/tree/69213343cbc42abeef8e68b249efad655f17649a/psp-ui/static/maps/dem/mainmap" target="_blank" rel="noopener noreferrer">Terrain data</a></span></footer>
+    <footer><span>Unofficial fan map · Palworld artwork © Pocketpair</span><span class="source-links"><a id="source-link" href="https://github.com/voidpossum/PalMap" target="_blank" rel="noopener noreferrer">Map &amp; calibration</a><span aria-hidden="true">·</span><a href="https://github.com/oMaN-Rod/palworld-save-pal/tree/69213343cbc42abeef8e68b249efad655f17649a/psp-ui/static/maps/dem/mainmap" target="_blank" rel="noopener noreferrer">Terrain data</a><span aria-hidden="true">·</span><a href="https://github.com/catrenelle/PalDex/tree/master/data" target="_blank" rel="noopener noreferrer">Location data</a></span></footer>
   </main>
   <script type="module" src="./map.js"></script>
 </body>
