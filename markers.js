@@ -58,6 +58,11 @@ export function initCaptureTracker(){
   for(const view of ['locations','pals'])document.querySelector(`#${view}-tab`).addEventListener('click',()=>{
     for(const name of ['locations','pals']){document.querySelector(`#${name}-view`).hidden=name!==view;document.querySelector(`#${name}-tab`).setAttribute('aria-pressed',String(name===view));}
   });
+  window.addEventListener('storage',event=>{
+    if(event.key!==storageKey&&event.key!==null)return;
+    progress={};try{const saved=JSON.parse(localStorage.getItem(storageKey)||'{}');if(saved&&typeof saved==='object'&&!Array.isArray(saved))for(const [id,state] of Object.entries(saved))if(valid.has(id)&&['caught','complete'].includes(state))progress[id]=state;}catch{}
+    render();
+  });
   search.addEventListener('input',render);render();
 }
 

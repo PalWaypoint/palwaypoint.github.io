@@ -4,6 +4,16 @@ An unofficial browser map focused on the in-game X/Y coordinates at the pointer,
 
 ## Run locally
 
+## Field guide
+
+Open `wiki.html` for the Pal catalog (288 numbered Pals), item catalog (1,892 records), ranch tables, breeding planner, technology, fishing, chest loot, base progression and merchant inventories. Checklist progress and capture status share the map's local browser storage and sync between open tabs. Checklist links focus individual pins on either map.
+
+New wiki tables use server-derived Palworld Atlas Data (MIT) and independently extracted Arkive data (CC BY-NC 4.0). See `WIKI-DATA-LICENSE.txt` and the About page for snapshot versions, attribution and coverage. PalMap is a feature reference, not the wiki's game-data source. Base research/raids, effigy reward tables, target-to-parents breeding search and progress export remain future work.
+
+See `GITHUB-CONNECTION.md` for this session's repository connection and direct-write setup. Rebuild the imported snapshot using `node research-independent/build-wiki.mjs` with its reference JSON inputs; verify shared progress and breeding using `node research-independent/verify-wiki.mjs`.
+
+## Local preview
+
 Unzip `marker-icons.zip` into the repository root, then serve the root with any static HTTP server. GitHub Pages unzips the icons during deployment. All runtime assets are local, including map images, location data and icons; no external map service or JavaScript dependency is required.
 
 ## Location layers

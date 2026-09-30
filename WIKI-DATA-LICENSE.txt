@@ -1,0 +1,44 @@
+PalWaypoint field-guide data, imported September 30, 2026
+
+Palworld Atlas Data: https://github.com/Awy64/palworld-atlas-data
+Steam build 25247047, generated 2026-09-15T04:58:13.3246082+00:00.
+MIT License
+Copyright (c) 2026 Adam Young
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+Arkive game tables: https://github.com/arkive-games/arkive
+Data endpoint: https://data-palworld.tc-imba.com
+Copyright Yihao Liu (tc-imba). Dataset licensed CC BY-NC 4.0:
+https://creativecommons.org/licenses/by-nc/4.0/
+Used for game descriptions, recipes, skills, work suitability, drops, ranch,
+breeding, technology, fishing, merchant inventories and base progression.
+Changes: localized English strings joined to records, HTML tags removed,
+selected fields projected, and records merged with the Atlas catalog.
+The combined wiki-data.json contains this noncommercial licensed material.
+No Arkive application code was copied. The endpoint does not identify a build.
+
+PalDB: https://paldb.cc/en/Pals
+Numbered roster reference and game portraits, already imported for the tracker.
+Palworld names, descriptions and underlying game artwork belong to Pocketpair.
+Source repository licenses do not transfer ownership of game artwork.
+
+Checklist locations come from the existing PalWaypoint map catalog. Its legacy
+and independent source attributions remain in MARKER-DATA-LICENSE.txt.
+PalMap is a feature reference, not a source for new wiki game tables or prose.

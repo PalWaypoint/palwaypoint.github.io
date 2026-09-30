@@ -1,7 +1,7 @@
 import {pixelToGame, screenToPixel} from './coordinates.js';
 import {mapConfigs} from './map-config.js?v=independent-camps-1';
 import {TerrainElevation} from './elevation.js';
-import {loadMarkers,loadCategories,markerCategories,categoryById,initCaptureTracker,regionAtPixel} from './markers.js?v=capture-regions-1';
+import {loadMarkers,loadCategories,markerCategories,categoryById,initCaptureTracker,regionAtPixel} from './markers.js?v=wiki-1';
 
 initCaptureTracker();
 
@@ -58,7 +58,9 @@ const image = new Image();
 const pointers = new Map();
 let width=0, height=0, fitScale=1, loaded=false, cursor=null, lastPinch=null, frame=0;
 let pinnedPosition=null,pressStart=null,pressMoved=false;
-let currentMap=mapConfigs.islands,mapGeneration=0;
+const linkedParams=new URLSearchParams(location.search);
+let pendingLinkedMarker=linkedParams.get('marker');
+let currentMap=mapConfigs[linkedParams.get('map')]||mapConfigs.islands,mapGeneration=0;
 const categoriesReady=loadCategories();
 let elevation = new TerrainElevation(()=>{if(loaded)updateReadout();},currentMap.terrain);
 
@@ -412,7 +414,17 @@ copyTeleport.addEventListener('click',async()=>{
 });
 document.querySelector('#retry').addEventListener('click',()=>{error.hidden=true;loading.hidden=false;loadImage();});
 function loadImage(){loaded=false;loading.hidden=false;error.hidden=true;controls.forEach(button=>button.disabled=true);image.src=currentMap.image;}
-image.onload=()=>{loaded=true;loading.hidden=true;error.hidden=true;controls.forEach(button=>button.disabled=false);resize();fit();};
+function focusLinkedMarker(){
+  if(!loaded||!markers.length||!pendingLinkedMarker)return;
+  const marker=markers.find(m=>m.id===pendingLinkedMarker);pendingLinkedMarker=null;
+  if(!marker)return;
+  activeCategories.clear();activeCategories.add(marker.category);
+  expandedGroups.add(categoryById.get(marker.category)?.group);
+  hideCompleted=false;hideCompletedCheckbox.checked=false;
+  camera.scale=fitScale*4;camera.x=width/2-marker.pixel.x*camera.scale;camera.y=height/2-marker.pixel.y*camera.scale;
+  updateLayerControls();refreshVisibleMarkers();selectMarker(marker);
+}
+image.onload=()=>{loaded=true;loading.hidden=true;error.hidden=true;controls.forEach(button=>button.disabled=false);resize();fit();focusLinkedMarker();};
 image.onerror=()=>{loaded=false;loading.hidden=true;error.hidden=false;controls.forEach(button=>button.disabled=true);};
 async function switchMap(key){
   if(!mapConfigs[key]||currentMap===mapConfigs[key])return;
@@ -432,4 +444,12 @@ document.querySelector('#source-link').href=currentMap.sourceUrl;
 new ResizeObserver(resize).observe(canvas);
 if(window.matchMedia('(max-width:700px)').matches)toggleLayers(false);
 resize();loadImage();
-Promise.all([categoriesReady,loadMarkers(currentMap)]).then(([,data])=>{if(mapGeneration)return;markers=data;refreshVisibleMarkers();updateLayerControls();}).catch(()=>{layerStatus.textContent='Location markers could not load. Reload to retry.';document.querySelector('#layers-count').textContent='!';});
+Promise.all([categoriesReady,loadMarkers(currentMap)]).then(([,data])=>{if(mapGeneration)return;markers=data;refreshVisibleMarkers();updateLayerControls();focusLinkedMarker();}).catch(()=>{layerStatus.textContent='Location markers could not load. Reload to retry.';document.querySelector('#layers-count').textContent='!';});
+document.querySelector('#map-name').textContent=currentMap.name.toUpperCase();
+mapButtons.forEach(button=>button.setAttribute('aria-pressed',String(mapConfigs[button.dataset.map]===currentMap)));
+window.addEventListener('storage',event=>{
+  if(event.key!==progressStorageKey&&event.key!==null)return;
+  completedMarkers.clear();for(const id of readProgress())completedMarkers.add(id);
+  if(selectedMarker)markerProgressCheckbox.checked=completedMarkers.has(selectedMarker.id);
+  updateLayerControls();refreshVisibleMarkers();
+});
