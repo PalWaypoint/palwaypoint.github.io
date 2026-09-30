@@ -14,6 +14,11 @@ https://github.com/oMaN-Rod/palworld-save-pal/blob/main/data/json/eggs_spawners.
 84dcb320ef07c219939e13da65b61106c8ef376b). Its instance IDs are
 stored with the egg records. Prior PalWaypoint pin IDs are retained.
 
+Another 79 positions (57 Enemy Camps and 22 Kinship Peaches) are from
+Palworld Save Pal's camps.json and kinship_peach.json game-data extractions
+in the same repository. One existing camp and two extracted camps did not
+match, so those were not substituted. Prior PalWaypoint pin IDs are retained.
+
 The 77 category badges are PalWaypoint compositions using pictograms from
 Lucide Static 1.48.0 (ISC license). Its license is included in the deployed
 icons/palwaypoint/LICENSE-lucide.txt file. Badge shapes and colors are

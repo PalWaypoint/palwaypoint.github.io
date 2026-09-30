@@ -1,5 +1,5 @@
 import {pixelToGame, screenToPixel} from './coordinates.js';
-import {mapConfigs} from './map-config.js?v=independent-eggs-1';
+import {mapConfigs} from './map-config.js?v=independent-camps-1';
 import {TerrainElevation} from './elevation.js';
 import {loadMarkers,loadCategories,markerCategories,categoryById} from './markers.js?v=palwaypoint-icons-1';
 
