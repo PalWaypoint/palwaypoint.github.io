@@ -1,7 +1,7 @@
 import {pixelToGame, screenToPixel} from './coordinates.js';
 import {mapConfigs} from './map-config.js?v=independent-core-1';
 import {TerrainElevation} from './elevation.js';
-import {loadMarkers,loadCategories,markerCategories,categoryById} from './markers.js?v=independent-core-1';
+import {loadMarkers,loadCategories,markerCategories,categoryById} from './markers.js?v=palwaypoint-icons-1';
 
 const canvas = document.querySelector('#map');
 const context = canvas.getContext('2d');
