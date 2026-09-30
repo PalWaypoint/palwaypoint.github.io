@@ -70,7 +70,7 @@ export const markerCategories=[];
 export const categoryById=new Map();
 
 export async function loadCategories(){
-  const response=await fetch('./marker-categories.json?v=palwaypoint-icons-1');
+  const response=await fetch('./marker-categories.json?v=independent-all-1');
   if(!response.ok)throw new Error('Marker categories unavailable');
   const categories=await response.json();
   markerCategories.splice(0,markerCategories.length,...categories);

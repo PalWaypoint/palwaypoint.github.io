@@ -1,48 +1,61 @@
-PalWaypoint marker data and icons
+PalWaypoint map data and artwork — independent sources
+Retrieved September 30, 2026.
 
-1,030 core marker positions (950 Palpagos Islands, 80 World Tree) are from
-the PalDex game-asset extraction at https://github.com/catrenelle/PalDex
-(snapshot retrieved September 30, 2026). Fast travel, Alpha Pal and journal
-names, plus ancient-ruin schematic names, also come from that extraction.
-The source's unique IDs are stored with those records. Prior PalWaypoint
-progress IDs are retained so existing browser checkboxes keep their state.
+Location positions, English names and encounter metadata:
+Arkive game-data extraction, copyright Yihao Liu (tc-imba), CC BY-NC 4.0.
+https://github.com/arkive-games/arkive/tree/master/tools/apps/palworld/maps
+https://data-palworld.tc-imba.com/markers/MainWorld.json
+https://data-palworld.tc-imba.com/markers/WorldTree.json
+English names: locales/en-US/markers/<map>.json at the same endpoint.
+Modified: mapped game types to PalWaypoint categories, converted records to
+compact arrays, excluded habitat sample points, and joined English names.
 
-All 1,816 egg-spawner positions (1,786 Palpagos Islands and 30 World Tree)
-are from the Palworld Save Pal game-data extraction at
-https://github.com/oMaN-Rod/palworld-save-pal/blob/main/data/json/eggs_spawners.json
-(snapshot retrieved September 30, 2026; source blob SHA
-84dcb320ef07c219939e13da65b61106c8ef376b). Its instance IDs are
-stored with the egg records. Prior PalWaypoint pin IDs are retained.
+All 407 effigies: PalDex's direct game-asset extraction.
+https://github.com/catrenelle/PalDex/tree/master/data
+Source actor identifiers are retained. Its code license does not transfer
+ownership of the underlying game data or artwork.
 
-Another 79 positions (57 Enemy Camps and 22 Kinship Peaches) are from
-Palworld Save Pal's camps.json and kinship_peach.json game-data extractions
-in the same repository. One existing camp and two extracted camps did not
-match, so those were not substituted. Prior PalWaypoint pin IDs are retained.
+All 1,816 egg spawners, 59 camps and 22 Kinship Peaches:
+https://github.com/oMaN-Rod/palworld-save-pal/tree/main/data/json
+Files eggs_spawners.json, camps.json and kinship_peach.json.
+Game-extracted instance identifiers are retained; eggs are grouped by region.
 
-The 77 category badges are PalWaypoint compositions using pictograms from
-Lucide Static 1.48.0 (ISC license). Its license is included in the deployed
-icons/palwaypoint/LICENSE-lucide.txt file. Badge shapes and colors are
-PalWaypoint's own design.
+Chest previews: independently extracted Arkive item acquisition tables.
+https://data-palworld.tc-imba.com/items.json
+Probabilities are kept separately by loot area and chest grade. The source
+does not fix each location's grade, appearance odds or respawn time.
 
-Remaining marker positions, many labels, categories, marker-specific Pal
-portraits and treasure artwork are adapted
-from the public game-data export at https://palmap.app/ (snapshot downloaded
-September 30, 2026). PalMap describes its data extraction and game-artwork
-attribution at https://palmap.app/about.
+Additional resource nodes, fishing salvage locations, and dungeon entrances:
+PalDB's public game map data, https://paldb.cc/en/Palpagos_Islands and
+https://paldb.cc/en/The_World_Tree . Source data literals:
+https://paldb.cc/js/map_data_en.js and https://paldb.cc/js/treemap_data_en.js
+Parsed only JSON data literals; no site application code was copied or run.
+Duplicate locations within the same type are omitted. Source indices and
+input hashes are retained for reproducibility. Game artwork is Pocketpair's.
 
-Chest loot previews and item icons are adapted from PalMap's public chest-tip
-data at https://palmap.app/chest-loot (snapshot downloaded September 30, 2026).
+Map textures and calibration: PalDex game-extracted map.webp and tree.webp.
+https://github.com/catrenelle/PalDex/tree/master/frontend/assets
+Textures uniformly reduced from 8192 to 4096 pixels, without cropping.
+Coordinate conversion: https://github.com/palworldlol/palworld-coord
+Terrain elevation: Palworld Save Pal's game-extracted DEM tiles, with its
+GPL-3.0 license notices bundled in terrain/LICENSE.txt and terrain-tree/LICENSE.txt.
+https://github.com/oMaN-Rod/palworld-save-pal
+Surface region geometry: independently extracted Arkive game data,
+CC BY-NC 4.0. Source geometry belongs to Pocketpair.
+https://github.com/arkive-games/arkive
 
-These files are game-derived reference data and artwork. Palworld and its
-artwork belong to Pocketpair, Inc. PalWaypoint is an unofficial fan map and
-is not affiliated with Pocketpair or PalMap. This notice does not assert an
-open-source license for the game data or icon artwork.
+Category badges: original PalWaypoint compositions using Lucide Static 1.48.0
+pictograms, ISC license in icons/palwaypoint/LICENSE-lucide.txt.
+Pal portraits and numbered roster: https://paldb.cc/en/Pals
+Item portraits: https://resource-palworld.tc-imba.com/icons/
+Per-item source URLs are listed in icons/item-art/sources.json.
+Capture sphere controls are original CSS artwork.
 
-PalDex's repository license covers its program code. This notice does not
-assert that the extracted Palworld data or artwork is MIT-licensed.
+Every active map record contains an independent source identifier. Previous
+IDs are retained solely for matching existing browser progress; no previous
+location labels, loot previews or imported icon files are retained.
+Coverage reflects these sources, not every location in the game.
 
-Pal capture tracker roster: numbered Pals from https://paldb.cc/en/Pals, retrieved September 30, 2026. Names and deck identifiers are game facts. Sphere controls are original CSS artwork.
-
-Capture tracker portraits: Palworld game artwork, retrieved from the portrait URLs on https://paldb.cc/en/Pals on September 30, 2026. Artwork belongs to Pocketpair.
-
-Surface region geometry and English names: Arkive, copyright Yihao Liu (tc-imba), game-extracted datasets licensed CC BY-NC 4.0 (https://creativecommons.org/licenses/by-nc/4.0/). Source: https://data-palworld.tc-imba.com/regions/MainWorld.json and locales/en-US/regions/MainWorld.json. Retrieved September 30, 2026. Modified by PalWaypoint: retained surface regions and rescaled 8192-pixel coordinates to 4096 pixels. Source extraction documented at https://github.com/arkive-games/arkive/blob/master/docs/superpowers/specs/2026-07-16-palworld-map-regions-design.md . Region names and underlying game geometry originate in Palworld, copyright Pocketpair.
+Palworld names, game data and underlying artwork belong to Pocketpair, Inc.
+This is an unofficial fan project. Source code licenses do not transfer
+ownership of game artwork. No third-party application code was copied.

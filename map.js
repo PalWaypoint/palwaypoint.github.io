@@ -1,7 +1,7 @@
 import {pixelToGame, screenToPixel} from './coordinates.js';
-import {mapConfigs} from './map-config.js?v=independent-camps-1';
+import {mapConfigs} from './map-config.js?v=independent-all-1';
 import {TerrainElevation} from './elevation.js';
-import {loadMarkers,loadCategories,markerCategories,categoryById,initCaptureTracker,regionAtPixel} from './markers.js?v=wiki-1';
+import {loadMarkers,loadCategories,markerCategories,categoryById,initCaptureTracker,regionAtPixel} from './markers.js?v=independent-all-1';
 
 initCaptureTracker();
 
@@ -196,7 +196,7 @@ function showMarkerTooltip(point){
   markerTooltip.style.top=`${Math.max(8,point.y-54)}px`;
 }
 function loadChestTips(){
-  return chestTipsPromise??=fetch('./chest-tips.json').then(response=>{
+  return chestTipsPromise??=fetch('./chest-tips.json?v=independent-all-1').then(response=>{
     if(!response.ok)throw new Error('Chest loot unavailable');
     return response.json();
   });
@@ -207,30 +207,29 @@ async function showChestLoot(marker){
   if(!marker.loot)return;
   markerLoot.append(chestNote('Loading possible loot…'));
   try{
-    const data=await loadChestTips();
-    if(selectedMarker!==marker)return;
-    const tip=data.tips?.[marker.loot];
-    markerLoot.replaceChildren();
-    if(!tip?.items?.length){markerLoot.append(chestNote('Loot details are unavailable for this chest.'));return;}
-    const heading=document.createElement('h3');heading.textContent='Possible loot';markerLoot.append(heading);
-    const pool=document.createElement('p');pool.className='marker-loot-pool';pool.textContent=tip.label;markerLoot.append(pool);
-    const list=document.createElement('ul');list.className='marker-loot-list';
-    for(const item of tip.items){
-      const row=document.createElement('li');
-      if(item.icon){const icon=document.createElement('img');icon.src=item.icon;icon.alt='';icon.loading='lazy';row.append(icon);}
-      const name=document.createElement('span');name.textContent=item.name;
-      const chance=document.createElement('strong');chance.textContent=`~${item.pct}%`;
-      row.append(name,chance);list.append(row);
+    const data=await loadChestTips();if(selectedMarker!==marker)return;
+    const tip=data.tips?.[marker.loot];markerLoot.replaceChildren();
+    if(!tip?.grades){markerLoot.append(chestNote('This location has no independently verified loot table.'));return;}
+    const heading=document.createElement('h3');heading.textContent='Possible loot by chest grade';markerLoot.append(heading);
+    markerLoot.append(chestNote(tip.label.replace(/([a-z])([A-Z])/g,'$1 $2')));
+    const label=document.createElement('label');label.textContent='Chest grade ';
+    const grade=document.createElement('select');grade.setAttribute('aria-label','Chest grade');
+    for(const value of Object.keys(tip.grades).sort((a,b)=>a-b)){const option=document.createElement('option');option.value=value;option.textContent='Grade '+value;grade.append(option);}
+    label.append(grade);markerLoot.append(label);
+    const list=document.createElement('ul');list.className='marker-loot-list';markerLoot.append(list);
+    const count=chestNote('');markerLoot.append(count);
+    function render(){list.replaceChildren();const entries=tip.grades[grade.value]||[];
+      for(const item of entries.slice(0,12)){
+        const row=document.createElement('li');if(item.icon){const icon=document.createElement('img');icon.src=item.icon;icon.alt='';icon.loading='lazy';row.append(icon);}
+        const name=document.createElement('span');name.textContent=item.name;
+        const chance=document.createElement('strong');chance.textContent=item.pct+'%';row.append(name,chance);list.append(row);
+      }
+      count.textContent='Showing '+Math.min(12,entries.length)+' of '+entries.length+' table entries.';
     }
-    markerLoot.append(list);
-    if(tip.money)markerLoot.append(chestNote(`Gold Coins ×${tip.money.min.toLocaleString('en-US')}–${tip.money.max.toLocaleString('en-US')} on every opening`));
-    if(tip.tier)markerLoot.append(chestNote(`Spawns up to a ${tip.tier}-tier chest`));
-    if(tip.respawn)markerLoot.append(chestNote(`Estimated respawn: ${tip.respawn}`));
-    markerLoot.append(chestNote('Percentages estimate item drops per opening. The chance of a chest appearing at this location is not available.'));
-    const source=document.createElement('a');source.href='https://palmap.app/chest-loot';source.target='_blank';source.rel='noopener noreferrer';source.textContent='Full loot tables';markerLoot.append(source);
-  }catch{
-    if(selectedMarker===marker){markerLoot.replaceChildren(chestNote('Chest loot could not load.'));}
-  }
+    grade.addEventListener('change',render);render();
+    markerLoot.append(chestNote('These are loot-table chances for the selected grade. The location record does not fix a chest grade. Appearance odds and respawn time are not recorded.'));
+    const source=document.createElement('a');source.href='./wiki.html#chest-loot';source.textContent='Full loot tables';markerLoot.append(source);
+  }catch{if(selectedMarker===marker)markerLoot.replaceChildren(chestNote('Chest loot could not load.'));}
 }
 function selectMarker(marker){
   selectedMarker=marker;pinnedPosition=marker.pixel;cursor=null;
