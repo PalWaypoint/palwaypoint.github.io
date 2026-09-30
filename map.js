@@ -1,7 +1,7 @@
 import {pixelToGame, screenToPixel} from './coordinates.js';
-import {mapConfigs} from './map-config.js?v=independent-all-1';
+import {mapConfigs} from './map-config.js?v=treasure-coverage-1';
 import {TerrainElevation} from './elevation.js';
-import {loadMarkers,loadCategories,markerCategories,categoryById,initCaptureTracker,regionAtPixel} from './markers.js?v=independent-all-1';
+import {loadMarkers,loadCategories,markerCategories,categoryById,initCaptureTracker,regionAtPixel} from './markers.js?v=treasure-coverage-1';
 
 initCaptureTracker();
 
@@ -196,7 +196,7 @@ function showMarkerTooltip(point){
   markerTooltip.style.top=`${Math.max(8,point.y-54)}px`;
 }
 function loadChestTips(){
-  return chestTipsPromise??=fetch('./chest-tips.json?v=independent-all-1').then(response=>{
+  return chestTipsPromise??=fetch('./chest-tips.json?v=treasure-coverage-1').then(response=>{
     if(!response.ok)throw new Error('Chest loot unavailable');
     return response.json();
   });
