@@ -26,7 +26,7 @@ jobs:
       - name: Prepare map and terrain
         run: |
           mkdir -p _site
-          cp index.html coordinates.js elevation.js map-config.js map.js style.css world-map.webp _site/
+          cp index.html coordinates.js elevation.js map-config.js map.js markers.js markers.json style.css world-map.webp MARKER-DATA-LICENSE.txt _site/
           unzip -q terrain.zip -d _site
           test -f _site/index.html
           test -f _site/terrain/4/0/0.png
