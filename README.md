@@ -4,13 +4,13 @@ An unofficial browser map focused on the in-game X/Y coordinates at the pointer,
 
 ## Run locally
 
-Serve the repository root with any static HTTP server. All runtime assets are local, including the map image and location data; no external map service or JavaScript dependency is required.
+Unzip `marker-icons.zip` into the repository root, then serve the root with any static HTTP server. GitHub Pages unzips the icons during deployment. All runtime assets are local, including map images, location data and icons; no external map service or JavaScript dependency is required.
 
 ## Location layers
 
-The collapsible Locations sidebar offers 12 toggleable categories: fast travel, watchtowers, boss towers, Alpha Pals, bounty targets, oil rigs, dungeons, journals, NPCs, effigies, schematics, and quest locations. Search filters the enabled categories. Nearby pins group into numbered clusters; click a cluster to zoom or a single pin to see its exact in-game X/Y and a copyable PalDefender command. The map switcher shows Palpagos Islands or World Tree, each with its own artwork, terrain heights, and location pins.
+The collapsible Locations sidebar has 77 toggleable marker types in nine groups: Collectibles, Treasure, Eggs, Enemies, Fishing, Locations, Mine, NPCs, and Resource. Each type has a distinct icon; some individual markers use a specific Pal portrait or treasure icon. Group and global toggles control visibility. Search filters the enabled markers. Nearby pins group into numbered clusters; click a cluster to zoom or a single pin to see its exact in-game X/Y and a copyable PalDefender command. The map switcher shows Palpagos Islands or World Tree, each with its own artwork, terrain heights, and location pins.
 
-The 1,228 main-world and 97 World Tree marker positions and labels are adapted from [PalDex's extracted Palworld data](https://github.com/catrenelle/PalDex/tree/master/data). Data credits and the source MIT license are in `MARKER-DATA-LICENSE.txt`. Marker positions are static references, not a live view of dungeon availability, NPC movement, or your personal save progress. Location pins retain the existing terrain-height caveats described below.
+The 14,011 Palpagos Islands and 379 World Tree marker positions, labels, type list, and icons are adapted from the public [PalMap game-data export](https://palmap.app/about), downloaded September 30, 2026. Marker positions are static references, not a live view of dungeon availability, NPC movement, or your personal save progress. The earlier PalDex-derived 1,228/97 marker set was replaced; the new data is not claimed to be covered by PalDex's MIT license. See `MARKER-DATA-LICENSE.txt` for attribution. Location pins retain the existing terrain-height caveats described below.
 
 ## Calibration and attribution
 
