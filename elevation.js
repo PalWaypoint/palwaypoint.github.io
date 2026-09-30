@@ -4,15 +4,16 @@ const SIZE = 8192;
 const TILE_SIZE = 512;
 const MAX_CACHE = 16;
 
-export function worldToTerrainPixel(worldX, worldY) {
-  return {x:(worldY + 724400) / 1448800 * SIZE - .5,
-    y:(349400 - worldX) / 1448800 * SIZE - .5};
+export function worldToTerrainPixel(worldX, worldY, area={minX:-1099400,maxX:349400,minY:-724400,maxY:724400}) {
+  return {x:(worldY - area.minY) / (area.maxY-area.minY) * SIZE - .5,
+    y:(area.maxX - worldX) / (area.maxX-area.minX) * SIZE - .5};
 }
 export function decodeHeight(red, green) {return red * 512 + green * 2 - 50000;}
 
 export class TerrainElevation {
-  constructor(onReady) {
+  constructor(onReady, area={minX:-1099400,maxX:349400,minY:-724400,maxY:724400,path:'./terrain'}) {
     this.onReady = onReady;
+    this.area = area;
     this.cache = new Map();
     this.pending = new Set();
     this.failed = new Map();
@@ -36,7 +37,7 @@ export class TerrainElevation {
   async loadTile({key,x,y}) {
     let bitmap;
     try {
-      const response=await fetch(`./terrain/4/${x}/${y}.png`);
+      const response=await fetch(`${this.area.path}/4/${x}/${y}.png`);
       if(!response.ok)throw new Error('Terrain tile unavailable');
       bitmap=await createImageBitmap(await response.blob(),{colorSpaceConversion:'none'});
       if(bitmap.width!==TILE_SIZE||bitmap.height!==TILE_SIZE)throw new Error('Unexpected terrain resolution');
@@ -62,7 +63,7 @@ export class TerrainElevation {
   }
   sample(worldX,worldY) {
     if(!Number.isFinite(worldX)||!Number.isFinite(worldY))return {state:'unknown'};
-    const point=worldToTerrainPixel(worldX,worldY);
+    const point=worldToTerrainPixel(worldX,worldY,this.area);
     if(point.x<-.5||point.y<-.5||point.x>SIZE-.5||point.y>SIZE-.5)return {state:'unknown'};
     const x=Math.max(0,Math.min(SIZE-1,point.x)),y=Math.max(0,Math.min(SIZE-1,point.y));
     const x0=Math.floor(x),y0=Math.floor(y),x1=Math.min(SIZE-1,x0+1),y1=Math.min(SIZE-1,y0+1);

@@ -17,13 +17,13 @@ export const markerCategories = [
 
 export const categoryById = new Map(markerCategories.map(category=>[category.id,category]));
 
-export async function loadMarkers(calibration){
-  const response=await fetch('./markers.json');
+export async function loadMarkers(config){
+  const response=await fetch(config.markers);
   if(!response.ok)throw new Error('Marker locations unavailable');
   const records=await response.json();
   return records.map(([category,name,worldX,worldY,worldZ,detail],id)=>{
     const gameX=(worldY-158000)/459;
     const gameY=(worldX+123888)/459;
-    return {id,category,name,detail,worldZ,gameX,gameY,pixel:gameToPixel(gameX,gameY,calibration)};
+    return {id,category,name,detail,worldZ,gameX,gameY,pixel:gameToPixel(gameX,gameY,config.calibration)};
   });
 }

@@ -1,5 +1,5 @@
 import {pixelToGame, screenToPixel} from './coordinates.js';
-import {mapConfig} from './map-config.js';
+import {mapConfigs} from './map-config.js';
 import {TerrainElevation} from './elevation.js';
 import {loadMarkers,markerCategories,categoryById} from './markers.js';
 
@@ -15,6 +15,8 @@ const copyTeleport = document.querySelector('#copy-tp');
 const unpinButton = document.querySelector('#unpin');
 const layersToggle=document.querySelector('#layers-toggle');
 const layersPanel=document.querySelector('#layers-panel');
+const mapBody=document.querySelector('#map-body');
+const mapButtons=[...document.querySelectorAll('.map-switcher button')];
 const layerList=document.querySelector('#layer-list');
 const layerStatus=document.querySelector('#layer-status');
 const markerSearch=document.querySelector('#marker-search');
@@ -35,7 +37,8 @@ const image = new Image();
 const pointers = new Map();
 let width=0, height=0, fitScale=1, loaded=false, cursor=null, lastPinch=null, frame=0;
 let pinnedPosition=null,pressStart=null,pressMoved=false;
-const elevation = new TerrainElevation(()=>{if(loaded)updateReadout();});
+let currentMap=mapConfigs.islands,mapGeneration=0;
+let elevation = new TerrainElevation(()=>{if(loaded)updateReadout();},currentMap.terrain);
 
 function scheduleDraw(){if(!frame)frame=requestAnimationFrame(()=>{frame=0;draw();});}
 function position(event){const rect=canvas.getBoundingClientRect();return {x:event.clientX-rect.left,y:event.clientY-rect.top};}
@@ -60,7 +63,7 @@ function updateLayerControls(){
 function updateLayerSummary(){
   const count=markers.filter(markerMatches).length;
   document.querySelector('#layers-count').textContent=count.toLocaleString('en-US');
-  layerStatus.textContent=markers.length?`${count.toLocaleString('en-US')} of ${markers.length.toLocaleString('en-US')} main-world locations shown. Click a pin for coordinates.`:'No locations loaded.';
+  layerStatus.textContent=markers.length?`${count.toLocaleString('en-US')} of ${markers.length.toLocaleString('en-US')} ${currentMap.name} locations shown. Click a pin for coordinates.`:'No locations loaded.';
 }
 function drawMarkers(){
   markerHits=[];
@@ -111,7 +114,7 @@ function clearMarkerSelection(){selectedMarker=null;markerDetail.hidden=true;}
 function readCoordinates(x,y,label){
   const point=screenToPixel(x,y,camera);
   const valid=loaded&&onMap(point);
-  const game=pixelToGame(point.x,point.y,mapConfig.calibration);
+  const game=pixelToGame(point.x,point.y,currentMap.calibration);
   coordX.value=valid?decimal(game.x):'—';
   coordY.value=valid?decimal(game.y):'—';
   coordinateSource.textContent=valid?label:loaded?'OUTSIDE MAP':'CENTER OF VIEW';
@@ -236,8 +239,8 @@ document.querySelector('#zoom-in').addEventListener('click',()=>{cursor=null;zoo
 document.querySelector('#zoom-out').addEventListener('click',()=>{cursor=null;zoomAt(1/1.4);});
 document.querySelector('#reset').addEventListener('click',fit);
 unpinButton.addEventListener('click',()=>{pinnedPosition=null;cursor=null;clearMarkerSelection();scheduleDraw();});
-function toggleLayers(open){layersPanel.hidden=!open;layersToggle.setAttribute('aria-expanded',String(open));if(open)markerSearch.focus();else layersToggle.focus();}
-layersToggle.addEventListener('click',()=>toggleLayers(layersPanel.hidden));
+function toggleLayers(open){mapBody.classList.toggle('sidebar-collapsed',!open);layersPanel.inert=!open;layersPanel.setAttribute('aria-hidden',String(!open));layersToggle.setAttribute('aria-expanded',String(open));if(open)markerSearch.focus();else layersToggle.focus();resize();}
+layersToggle.addEventListener('click',()=>toggleLayers(true));
 document.querySelector('#layers-close').addEventListener('click',()=>toggleLayers(false));
 document.querySelector('#layers-all').addEventListener('click',()=>{for(const category of markerCategories)activeCategories.add(category.id);updateLayerControls();scheduleDraw();});
 document.querySelector('#layers-none').addEventListener('click',()=>{activeCategories.clear();updateLayerControls();scheduleDraw();});
@@ -251,10 +254,25 @@ copyTeleport.addEventListener('click',async()=>{
   clearTimeout(copyResetTimer);copyResetTimer=setTimeout(()=>{copyTeleport.textContent='Copy';},2000);
 });
 document.querySelector('#retry').addEventListener('click',()=>{error.hidden=true;loading.hidden=false;loadImage();});
-function loadImage(){controls.forEach(button=>button.disabled=true);image.src=mapConfig.image;}
+function loadImage(){loaded=false;loading.hidden=false;error.hidden=true;controls.forEach(button=>button.disabled=true);image.src=currentMap.image;}
 image.onload=()=>{loaded=true;loading.hidden=true;error.hidden=true;controls.forEach(button=>button.disabled=false);resize();fit();};
 image.onerror=()=>{loaded=false;loading.hidden=true;error.hidden=false;controls.forEach(button=>button.disabled=true);};
-document.querySelector('#source-link').href=mapConfig.sourceUrl;
+async function switchMap(key){
+  if(!mapConfigs[key]||currentMap===mapConfigs[key])return;
+  currentMap=mapConfigs[key];const generation=++mapGeneration;
+  markers=[];markerHits=[];pinnedPosition=null;cursor=null;clearMarkerSelection();markerTooltip.hidden=true;
+  elevation=new TerrainElevation(()=>{if(loaded)updateReadout();},currentMap.terrain);
+  document.querySelector('#map-name').textContent=currentMap.name.toUpperCase();
+  document.querySelector('#source-link').href=currentMap.sourceUrl;
+  for(const button of mapButtons)button.setAttribute('aria-pressed',String(button.dataset.map===key));
+  updateLayerControls();layerStatus.textContent='Loading locations…';
+  loadImage();
+  try{const data=await loadMarkers(currentMap);if(generation!==mapGeneration)return;markers=data;updateLayerControls();scheduleDraw();}
+  catch{if(generation===mapGeneration){layerStatus.textContent='Location markers could not load. Reload to retry.';document.querySelector('#layers-count').textContent='!';}}
+}
+for(const button of mapButtons)button.addEventListener('click',()=>switchMap(button.dataset.map));
+document.querySelector('#source-link').href=currentMap.sourceUrl;
 new ResizeObserver(resize).observe(canvas);
+if(window.matchMedia('(max-width:700px)').matches)toggleLayers(false);
 resize();loadImage();
-loadMarkers(mapConfig.calibration).then(data=>{markers=data;updateLayerControls();scheduleDraw();}).catch(()=>{layerStatus.textContent='Location markers could not load. Reload to retry.';document.querySelector('#layers-count').textContent='!';});
+loadMarkers(currentMap).then(data=>{markers=data;updateLayerControls();scheduleDraw();}).catch(()=>{layerStatus.textContent='Location markers could not load. Reload to retry.';document.querySelector('#layers-count').textContent='!';});
