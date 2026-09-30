@@ -26,7 +26,7 @@ jobs:
       - name: Prepare map and terrain
         run: |
           mkdir -p _site
-          cp index.html coordinates.js elevation.js map-config.js map.js markers.js marker-categories.json markers.json tree-markers.json style.css world-map.webp tree-map.webp MARKER-DATA-LICENSE.txt _site/
+          cp index.html coordinates.js elevation.js map-config.js map.js markers.js marker-categories.json markers.json tree-markers.json chest-tips.json style.css world-map.webp tree-map.webp MARKER-DATA-LICENSE.txt _site/
           unzip -q marker-icons.zip -d _site
           unzip -q terrain.zip -d _site
           unzip -q terrain-tree.zip -d _site
@@ -34,6 +34,7 @@ jobs:
           test -f _site/terrain/4/0/0.png
           test -f _site/terrain-tree/4/0/0.png
           test -f _site/icons/fast-travel.webp
+          test -f _site/icons/items/T_itemicon_Consume_FishingBait_1.webp
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Upload Pages artifact
