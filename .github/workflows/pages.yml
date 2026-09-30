@@ -34,8 +34,8 @@ jobs:
           test -f _site/index.html
           test -f _site/terrain/4/0/0.png
           test -f _site/terrain-tree/4/0/0.png
-          test -f _site/icons/fast-travel.webp
-          test -f _site/icons/items/T_itemicon_Consume_FishingBait_1.webp
+          test -f _site/icons/palwaypoint/fast-travel.svg
+          test -f _site/icons/item-art/sources.json
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Upload Pages artifact
