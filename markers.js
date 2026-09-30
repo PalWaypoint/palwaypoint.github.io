@@ -16,10 +16,10 @@ export async function loadMarkers(config){
   const response=await fetch(config.markers);
   if(!response.ok)throw new Error('Marker locations unavailable');
   const records=await response.json();
-  return records.map(([category,name,worldX,worldY,detail,icon,level,loot])=>{
+  return records.map(([category,name,worldX,worldY,detail,icon,level,loot,legacyId])=>{
     const gameX=(worldY-158000)/459;
     const gameY=(worldX+123888)/459;
-    const id=`${config.name}:${category}:${worldX}:${worldY}`;
+    const id=legacyId||`${config.name}:${category}:${worldX}:${worldY}`;
     return {id,category,name,detail,icon,level,loot,gameX,gameY,pixel:gameToPixel(gameX,gameY,config.calibration)};
   });
 }

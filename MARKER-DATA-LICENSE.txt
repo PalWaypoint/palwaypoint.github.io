@@ -1,7 +1,14 @@
 PalWaypoint marker data and icons
 
-Marker positions, labels, categories and icons in this site are adapted from
-the public game-data export at https://palmap.app/ (snapshot downloaded
+1,030 core marker positions (950 Palpagos Islands, 80 World Tree) are from
+the PalDex game-asset extraction at https://github.com/catrenelle/PalDex
+(snapshot retrieved September 30, 2026). Fast travel, Alpha Pal and journal
+names, plus ancient-ruin schematic names, also come from that extraction.
+The source's unique IDs are stored with those records. Prior PalWaypoint
+progress IDs are retained so existing browser checkboxes keep their state.
+
+Remaining marker positions, many labels, categories, and icons are adapted
+from the public game-data export at https://palmap.app/ (snapshot downloaded
 September 30, 2026). PalMap describes its data extraction and game-artwork
 attribution at https://palmap.app/about.
 
@@ -13,5 +20,5 @@ artwork belong to Pocketpair, Inc. PalWaypoint is an unofficial fan map and
 is not affiliated with Pocketpair or PalMap. This notice does not assert an
 open-source license for the game data or icon artwork.
 
-The earlier PalDex-derived marker set has been replaced and is not included
-in the current published marker files.
+PalDex's repository license covers its program code. This notice does not
+assert that the extracted Palworld data or artwork is MIT-licensed.

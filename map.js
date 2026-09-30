@@ -1,7 +1,7 @@
 import {pixelToGame, screenToPixel} from './coordinates.js';
-import {mapConfigs} from './map-config.js?v=paldex-map-1';
+import {mapConfigs} from './map-config.js?v=independent-core-1';
 import {TerrainElevation} from './elevation.js';
-import {loadMarkers,loadCategories,markerCategories,categoryById} from './markers.js';
+import {loadMarkers,loadCategories,markerCategories,categoryById} from './markers.js?v=independent-core-1';
 
 const canvas = document.querySelector('#map');
 const context = canvas.getContext('2d');
@@ -242,8 +242,8 @@ function readCoordinates(x,y,label){
   coordX.value=valid?decimal(game.x):'—';
   coordY.value=valid?decimal(game.y):'—';
   coordinateSource.textContent=valid?label:loaded?'OUTSIDE MAP':'CENTER OF VIEW';
-  // Recover raw world coordinates from unrounded map coordinates using PalMap's
-  // in-game conversion. DEM extent registration is independent of the artwork.
+  // Recover raw world coordinates from unrounded map coordinates using the
+  // game-derived conversion also documented by palworld-coord.
   const ground=valid?elevation.sample(game.y*459-123888,game.x*459+158000):{state:'outside'};
   coordZ.classList.toggle('pending',ground.state==='loading');
   if(ground.state==='ready'){
