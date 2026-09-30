@@ -20,18 +20,20 @@ Chest details show the top possible items, approximate drop percentages per open
 
 ## Calibration and attribution
 
-The main-world and World Tree textures come from [Void Possum / PalMap](https://github.com/voidpossum/PalMap/tree/af430c078675083b59408a00efb9c4bd911db5d4), sources `app/data/T_WorldMap.png` and `app/data/T_TreeMap.png`. Both were uniformly reduced from 8192×8192 to 4096×4096 without cropping. Palworld artwork belongs to Pocketpair, Inc. PalMap credits PalDB for coordinate conversion research. No PalMap program code was copied.
+The main-world and World Tree textures come from [PalDex's game-extracted map assets](https://github.com/catrenelle/PalDex/tree/master/frontend/assets), files `map.webp` and `tree.webp` retrieved September 30, 2026. Both were uniformly reduced from 8192×8192 to 4096×4096 without cropping. The published textures can be rebuilt with `research-independent/build-map-assets.py`. Palworld artwork belongs to Pocketpair, Inc.
 
 For normalized image coordinates `u = pixelX / imageWidth`, `v = pixelY / imageHeight`:
 
 ```
-gameX = (-882397 + 1448786 * u) / 459
-gameY = (473273 - 1448786 * v) / 459
+worldY = minWorldY + u * (maxWorldY - minWorldY)
+worldX = maxWorldX - v * (maxWorldX - minWorldX)
+gameX = (worldY - 158000) / 459
+gameY = (worldX + 123888) / 459
 ```
 
-The constants come from [PalMap's calibration documentation](https://github.com/voidpossum/PalMap/blob/af430c078675083b59408a00efb9c4bd911db5d4/docs/TECHNICAL.md#coordinates). World Tree artwork uses the published world bounding box (world X 347350 to 689148; world Y -818197 to -476399) and the same global in-game coordinate conversion as the islands. This keeps PalDefender's X/Y frame consistent when switching maps. The calibration is community-derived and should be checked against in-game landmarks when replacing the map artwork.
+The world bounds come from Palworld's `DT_WorldMapUIData`, documented in [PalDex's map code](https://github.com/catrenelle/PalDex/blob/master/frontend/index.html); the world-to-HUD transform is also documented by [palworld-coord](https://github.com/palworldlol/palworld-coord/blob/main/src/palworld_coord/__init__.py). Main-world bounds are world X -1099400 to 349400 and world Y -724400 to 724400. World Tree bounds are world X 347351.5 to 689148.5 and world Y -818197 to -476400. This keeps PalDefender's X/Y frame consistent when switching maps. The calibration is community-derived and should be checked against in-game landmarks when replacing the map artwork.
 
-Source image SHA-256: `F02560929CF0F30EE16BA2D2693F9CA65CA5400DB14E13BCA862268092499B62`.
+Downloaded PalDex image SHA-256: main world `86FFEACA0BFEC9006ABD147588C1AC8962361B76815B67D842B734988F95A37A`, World Tree `28AAAD119E8456114F3F5D50244B64F54D96E9E8B2A76A2565FE70C4FF04E06F`.
 
 ## Ground Z
 
@@ -48,7 +50,7 @@ uDEM = (worldY + 724400) / 1448800
 vDEM = (349400 - worldX) / 1448800
 ```
 
-The DEM extent differs slightly from the artwork calibration. Source pixels are sampled at their centers. Tile caching is bounded, preserves PNG channel bytes, and recomputes the current cursor readout after loading so slow responses cannot show a previous position's height.
+The DEM and artwork use the same game-derived world extents. Source pixels are sampled at their centers. Tile caching is bounded, preserves PNG channel bytes, and recomputes the current cursor readout after loading so slow responses cannot show a previous position's height.
 
 The source has no coverage/validity mask: ocean or unmeasured landscape can carry the same zero encoding as genuine zero-elevation ground. Zero or mixed zero/nonzero samples therefore show a dash and an explicit ambiguity label instead of claiming confirmed ground. Nonzero samples may still differ on caves, overhangs, rocks, floating/static meshes, buildings and bridges; a landscape heightfield cannot represent all collision surfaces at one X/Y. The source does not publish an elevation accuracy bound or the exact extraction game patch.
 
