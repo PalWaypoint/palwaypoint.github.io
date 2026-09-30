@@ -68,7 +68,11 @@ function updateLayerControls(){
   for(const marker of markers)counts.set(marker.category,(counts.get(marker.category)||0)+1);
   layerList.replaceChildren();
   const groups=new Map();
-  for(const category of markerCategories){if(!groups.has(category.group))groups.set(category.group,[]);groups.get(category.group).push(category);}
+  for(const category of markerCategories){
+    if(!counts.get(category.id))continue;
+    if(!groups.has(category.group))groups.set(category.group,[]);
+    groups.get(category.group).push(category);
+  }
   for(const [group,categories] of groups){
     const groupMatches=!searchTerm||group.toLowerCase().includes(searchTerm);
     const matchingCategories=categories.filter(category=>groupMatches||category.name.toLowerCase().includes(searchTerm)||markers.some(marker=>marker.category===category.id&&`${marker.name} ${marker.detail}`.toLowerCase().includes(searchTerm)));
@@ -294,8 +298,8 @@ function toggleLayers(open){
 layersToggle.addEventListener('click',()=>toggleLayers(mapBody.classList.contains('sidebar-collapsed')));
 document.querySelector('#layers-close').addEventListener('click',()=>toggleLayers(false));
 sidebarBackdrop.addEventListener('click',()=>toggleLayers(false));
-document.querySelector('#layers-all').addEventListener('click',()=>{for(const category of markerCategories)activeCategories.add(category.id);updateLayerControls();refreshVisibleMarkers();});
-document.querySelector('#layers-none').addEventListener('click',()=>{activeCategories.clear();updateLayerControls();refreshVisibleMarkers();});
+document.querySelector('#layers-all').addEventListener('click',()=>{for(const marker of markers)activeCategories.add(marker.category);updateLayerControls();refreshVisibleMarkers();});
+document.querySelector('#layers-none').addEventListener('click',()=>{for(const marker of markers)activeCategories.delete(marker.category);updateLayerControls();refreshVisibleMarkers();});
 markerSearch.addEventListener('input',()=>{searchTerm=markerSearch.value.trim().toLowerCase();updateLayerControls();refreshVisibleMarkers();});
 layersPanel.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();toggleLayers(false);}});
 copyTeleport.addEventListener('click',async()=>{
