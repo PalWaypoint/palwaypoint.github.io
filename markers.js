@@ -70,7 +70,7 @@ export const markerCategories=[];
 export const categoryById=new Map();
 
 export async function loadCategories(){
-  const response=await fetch('./marker-categories.json?v=treasure-coverage-1');
+  const response=await fetch('./marker-categories.json?v=game-recovery-1');
   if(!response.ok)throw new Error('Marker categories unavailable');
   const categories=await response.json();
   markerCategories.splice(0,markerCategories.length,...categories);
@@ -82,11 +82,11 @@ export async function loadMarkers(config){
   const response=await fetch(config.markers);
   if(!response.ok)throw new Error('Marker locations unavailable');
   const records=await response.json();
-  return records.map(([category,name,worldX,worldY,detail,icon,level,loot,legacyId])=>{
+  return records.map(([category,name,worldX,worldY,detail,icon,level,loot,legacyId,sourceId,metadata])=>{
     const gameX=(worldY-158000)/459;
     const gameY=(worldX+123888)/459;
     const id=legacyId||`${config.name}:${category}:${worldX}:${worldY}`;
-    return {id,category,name,detail,icon,level,loot,gameX,gameY,pixel:gameToPixel(gameX,gameY,config.calibration)};
+    return {id,category,name,detail,icon,level,loot,sourceId,metadata,gameX,gameY,pixel:gameToPixel(gameX,gameY,config.calibration)};
   });
 }
 

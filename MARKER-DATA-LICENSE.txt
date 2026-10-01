@@ -59,3 +59,13 @@ Coverage reflects these sources, not every location in the game.
 Palworld names, game data and underlying artwork belong to Pocketpair, Inc.
 This is an unofficial fan project. Source code licenses do not transfer
 ownership of game artwork. No third-party application code was copied.
+
+Direct recovery on September 30, 2026: installed Palworld Steam build 25246127.
+Read 9,982 map packages without extraction failures; resolved scene-component
+attachment transforms and instance/class-default overrides. Actor/package IDs
+and source heights are retained in the recovery audit. Game loot weights are
+reported per slot and grade; these do not establish world spawn probability.
+Extracted independently with CUE4Parse (Apache-2.0),
+https://github.com/FabianFG/CUE4Parse , and PalworldModding mappings,
+https://github.com/PalworldModding/UsefulFiles . Game assets belong to Pocketpair.
+No competitor map content supplies the recovered data.
