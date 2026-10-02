@@ -86,3 +86,20 @@ corridor boundary vertices. Seventeen names resolve through game region and
 English localization tables. Positions are approximate and not checked in
 gameplay. Approach endpoints may precede the visible rock opening. Full
 transforms, mesh vertices and package hashes remain in the local audit.
+
+October 2 spawn heatmaps: weighted encounter groups and all character slots
+are read from the same installed-build DT_PalWildSpawner and joined to
+DT_PalSpawnerPlacement. Positive-weight NPC and non-catalog groups remain in
+the denominator. Day and night weights are normalized separately over eligible
+rows; All mode displays both results without averaging. Multi-character rows
+share one group chance. Overlapping spawn pools are displayed separately.
+These percentages are conditional group-selection weight shares, not guarantees
+of a world encounter. Spawn caps and world state can affect actual encounters.
+Heat combines smoothed game Paldeck coverage with weighted placement density;
+it is approximate, not an exact spawn boundary or percentage scale. Area
+radii join RadiusType to BP_PalGameSetting defaults (S/M/L) or StaticRadius.
+Hovering outside a radius can show a clearly labeled nearby field area.
+Paldeck-only fallback coverage is labeled without invented encounter chances.
+Export hashes are retained in pal-spawns.json; hashes identify extracted JSON.
+The installed BP_PalGameSetting CaptureExpBonusMaxCount is 5. Manual completion
+labels use 5/5 without altering saved capture-state keys or values.

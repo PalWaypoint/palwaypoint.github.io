@@ -1,9 +1,9 @@
 import {pixelToGame, screenToPixel} from './coordinates.js';
 import {mapConfigs} from './map-config.js?v=recovery-2';
 import {TerrainElevation} from './elevation.js';
-import {loadMarkers,loadCategories,markerCategories,categoryById,initCaptureTracker,regionAtPixel} from './markers.js?v=tools-1';
-import {loadPalHabitats,habitatFor,worldPixel,spawnMarkers} from './pal-habitats.js?v=recovery-2';
-import {palRoster} from './markers.js?v=tools-1';
+import {loadMarkers,loadCategories,markerCategories,categoryById,initCaptureTracker,regionAtPixel} from './markers.js?v=capture-5';
+import {loadPalHabitats,habitatFor,worldPixel,spawnMarkers,spawnAreas,spawnAreasAt,habitatCloud} from './pal-habitats.js?v=heatmap-1';
+import {palRoster} from './markers.js?v=capture-5';
 import {markerViewUrl,markerWikiLinks} from './map-links.js';
 import {loadLootTables,poolIdsFor} from './chest-loot.js?v=loot-2';
 
@@ -49,6 +49,11 @@ const expandedGroups=new Set(['Collectibles']);
 const iconCache=new Map();
 let markers=[],visibleMarkers=[],markerHits=[],selectedMarker=null,hoveredMarker=null,searchTerm='';
 let habitatData=null,selectedPal=null,selectedPalName='',habitatTime='day',habitatGeneration=0,habitatMarkers=[];
+let habitatAreas=[],heatSurface=null,spawnPinned=false,spawnViewKey='';
+const spawnDetail=document.querySelector('#spawn-detail'),spawnDetailContent=document.querySelector('#spawn-detail-content');
+const markerSpawns=document.querySelector('#marker-spawns'),heatmapToggle=document.querySelector('#habitat-heatmap');
+const spawnPinsToggle=document.querySelector('#habitat-pins');
+const palNames=new Map(palRoster.map(p=>[p.id,p.name]));
 let chestTipsPromise=null;
 let teleportText='';
 let copyResetTimer=0;
@@ -96,14 +101,21 @@ function markerMatches(marker){
   const category=categoryById.get(marker.category);
   return `${marker.name} ${marker.detail} ${category?.name} ${category?.group}`.toLowerCase().includes(searchTerm);
 }
-function refreshVisibleMarkers(){visibleMarkers=[...markers.filter(markerMatches),...habitatMarkers];updateLayerSummary();scheduleDraw();}
+function habitatVisible(){return !!selectedPal&&!document.querySelector('#pals-view').hidden;}
+function refreshVisibleMarkers(){visibleMarkers=habitatVisible()?[...habitatMarkers]:markers.filter(markerMatches);updateLayerSummary();scheduleDraw();}
+for(const view of ['locations','pals'])document.querySelector(`#${view}-tab`).addEventListener('click',()=>{clearMarkerSelection();refreshVisibleMarkers();});
 function refreshHabitat(){
-  habitatMarkers=[];
+  habitatMarkers=[];habitatAreas=[];heatSurface=null;hideSpawnDetails();
+  document.querySelector('#browse-spawns').disabled=true;
   if(selectedPal&&habitatData){
     categoryById.set('Wild Pal Spawn',{name:'Wild Pal Spawn',icon:`./icons/pals/${selectedPal}.webp`,trackable:false});
     habitatMarkers=spawnMarkers(habitatData,selectedPal,currentMap,habitatTime).map(m=>({...m,name:selectedPalName}));
     const data=habitatFor(habitatData,selectedPal,currentMap.name);
-    document.querySelector('#habitat-status').textContent=data?`${habitatMarkers.length.toLocaleString('en-US')} possible ${habitatTime} spawn locations on ${currentMap.name}.`:`No wild habitat or field spawn is recorded on ${currentMap.name}.`;
+    habitatAreas=spawnAreas(habitatData,selectedPal,currentMap,habitatTime);
+    document.querySelector('#browse-spawns').disabled=!habitatAreas.length;
+    buildHeatSurface();
+    const timeLabel=habitatTime==='all'?'day/night':habitatTime;
+    document.querySelector('#habitat-status').textContent=data?`${habitatMarkers.length.toLocaleString('en-US')} possible ${timeLabel} spawn locations on ${currentMap.name}.${!habitatAreas.length&&habitatCloud(habitatData,selectedPal,currentMap.name,habitatTime).length?' Paldeck habitat only; field encounter chances are not recorded here.':''}`:`No wild habitat or field spawn is recorded on ${currentMap.name}.`;
   }
   refreshVisibleMarkers();
 }
@@ -120,17 +132,86 @@ async function selectHabitat(id,name=id){
 for(const button of document.querySelectorAll('[data-habitat-time]'))button.addEventListener('click',()=>{
   habitatTime=button.dataset.habitatTime;for(const b of document.querySelectorAll('[data-habitat-time]'))b.setAttribute('aria-pressed',String(b===button));clearMarkerSelection();refreshHabitat();
 });
-document.querySelector('#clear-habitat').addEventListener('click',()=>{selectedPal=null;habitatGeneration++;habitatMarkers=[];document.querySelector('#habitat-controls').hidden=true;clearMarkerSelection();refreshVisibleMarkers();});
-function drawHabitat(){
-  if(!selectedPal||!habitatData)return;
-  const cloud=habitatFor(habitatData,selectedPal,currentMap.name)?.[habitatTime]||[];
-  context.save();context.fillStyle=habitatTime==='night'?'#bd9bf7':'#68e7cb';context.globalAlpha=.22;
-  for(const [x,y] of cloud){const p=worldPixel(x,y,currentMap),sx=camera.x+p.x*camera.scale,sy=camera.y+p.y*camera.scale;
-    if(sx< -12||sx>width+12||sy< -12||sy>height+12)continue;
-    context.beginPath();context.arc(sx,sy,Math.min(12,Math.max(3,camera.scale*9)),0,Math.PI*2);context.fill();
+document.querySelector('#clear-habitat').addEventListener('click',()=>{selectedPal=null;habitatGeneration++;habitatMarkers=[];habitatAreas=[];heatSurface=null;document.querySelector('#habitat-controls').hidden=true;clearMarkerSelection();refreshVisibleMarkers();});
+heatmapToggle.addEventListener('change',scheduleDraw);
+spawnPinsToggle.addEventListener('change',scheduleDraw);
+function buildHeatSurface(){
+  // Rasterize once in map coordinates. Panning/zooming cannot move the kernels.
+  const size=1024,ratio=size/4096,density=new Float32Array(size*size);
+  // Paldeck coverage uses a fixed-world smoothing kernel, not a claimed spawn
+  // boundary or probability. Field areas add their weighted concentration.
+  const smoothing=Math.min(35000,(currentMap.terrain.maxX-currentMap.terrain.minX)*.025);
+  const samples=[...habitatCloud(habitatData,selectedPal,currentMap.name,habitatTime).map(([x,y])=>({pixel:worldPixel(x,y,currentMap),radiusX:Math.abs(currentMap.calibration.pixelsPerX*smoothing/459),radiusY:Math.abs(currentMap.calibration.pixelsPerY*smoothing/459),chance:1})),...habitatAreas];
+  for(const area of samples){
+    const x=area.pixel.x*ratio,y=area.pixel.y*ratio,rx=Math.max(1,area.radiusX*ratio),ry=Math.max(1,area.radiusY*ratio);
+    const left=Math.max(0,Math.floor(x-rx)),right=Math.min(size-1,Math.ceil(x+rx)),top=Math.max(0,Math.floor(y-ry)),bottom=Math.min(size-1,Math.ceil(y+ry));
+    for(let py=top;py<=bottom;py++)for(let px=left;px<=right;px++){
+      const d=((px-x)/rx)**2+((py-y)/ry)**2;
+      if(d<1)density[py*size+px]+=area.chance*(1-d)**2;
+    }
   }
-  context.restore();
+  let max=0;for(const v of density)max=Math.max(max,v);if(!max)return;
+  heatSurface=document.createElement('canvas');heatSurface.width=size;heatSurface.height=size;
+  const ctx=heatSurface.getContext('2d'),pixels=ctx.createImageData(size,size);
+  for(let i=0;i<density.length;i++)if(density[i]>0){
+    const t=Math.sqrt(density[i]/max),warm=Math.max(0,(t-.45)/.55),offset=i*4;
+    pixels.data[offset]=Math.round(45+210*warm);pixels.data[offset+1]=Math.round(214-24*warm);pixels.data[offset+2]=Math.round(188-130*warm);pixels.data[offset+3]=Math.round(195*Math.min(1,t*2));
+  }
+  ctx.putImageData(pixels,0,0);
 }
+function drawHabitat(){
+  if(habitatVisible()&&heatmapToggle.checked&&heatSurface)context.drawImage(heatSurface,camera.x,camera.y,4096*camera.scale,4096*camera.scale);
+}
+function hideSpawnDetails(){spawnPinned=false;spawnViewKey='';spawnDetail.hidden=true;}
+function chanceText(value){if(!value)return '—';return value<.0005?'<0.05%':(value*100).toLocaleString('en-US',{maximumFractionDigits:1})+'%';}
+function renderSpawnGroups(target,areas,nearby=false,browse=false){
+  target.replaceChildren();if(!areas.length)return;
+  const selector=document.createElement('select');selector.setAttribute('aria-label','Encounter area');
+  for(const area of areas){const option=document.createElement('option');option.value=area.id;option.textContent=`X ${Math.round((area.worldY-158000)/459)}, Y ${Math.round((area.worldX+123888)/459)} · Z ${Math.round(area.worldZ/100)} m`;selector.append(option);}
+  selector.hidden=areas.length===1;target.append(selector);
+  const body=document.createElement('div');target.append(body);
+  const render=()=>{
+    body.replaceChildren();const area=areas.find(a=>a.id===selector.value)||areas[0];
+    if(areas.length===1){const coordinates=document.createElement('p');coordinates.className='spawn-meta';coordinates.textContent=selector.options[0].textContent;body.append(coordinates);}
+    const location=document.createElement('p');location.className='spawn-meta';location.textContent=`${nearby?'Nearby field area · ':''}${habitatTime==='all'?'Day & night':habitatTime==='night'?'Night':'Day'} · ${Math.round(area.radius/100)} m spawn radius${area.worldZ< -10000?' · Underground':''}`;body.append(location);
+    const table=document.createElement('table');table.className='spawn-table';
+    const thead=document.createElement('thead'),heading=document.createElement('tr');
+    for(const text of ['Encounter group',...(habitatTime==='all'?['Day','Night']:['Chance'])]){const th=document.createElement('th');th.scope='col';th.textContent=text;heading.append(th);}thead.append(heading);table.append(thead);
+    const tbody=document.createElement('tbody');
+    for(const row of [...area.rows].sort((a,b)=>Math.max(...Object.values(b.chances))-Math.max(...Object.values(a.chances)))){
+      const tr=document.createElement('tr');tr.classList.toggle('spawn-selected',row.members.some(m=>m.palId===selectedPal));
+      if(!Object.values(row.chances).some(Boolean))tr.classList.add('spawn-inactive');
+      const members=document.createElement('td');
+      if(!row.members.length)members.textContent='No character entry';
+      for(const member of row.members){const line=document.createElement('div');line.className='spawn-member';
+        if(member.palId){const a=document.createElement('a');a.href=`./wiki.html#pal/${encodeURIComponent(member.palId)}`;a.textContent=palNames.get(member.palId)||member.name;line.append(a);}
+        else{const label=document.createElement('span');label.textContent=member.name+(member.type==='NPC'?' (NPC)':'');line.append(label);}
+        const quantity=document.createElement('span');quantity.textContent=` ×${member.min===member.max?member.min:member.min+'–'+member.max}`;line.append(quantity);
+        const levels=document.createElement('small');levels.textContent=`Lv ${member.levelMin===member.levelMax?member.levelMin:member.levelMin+'–'+member.levelMax}`;line.append(levels);members.append(line);
+      }
+      if(row.time!=='Undefined'||row.weather!=='Undefined'){const condition=document.createElement('small');condition.className='spawn-condition';condition.textContent=[row.time==='Undefined'?'Any time':row.time,row.weather==='Undefined'?'':row.weather].filter(Boolean).join(' · ');members.append(condition);}
+      tr.append(members);for(const t of habitatTime==='all'?['day','night']:[habitatTime]){const td=document.createElement('td');td.textContent=chanceText(row.chances[t]);tr.append(td);}tbody.append(tr);
+    }
+    table.append(tbody);body.append(table);
+    const note=document.createElement('p');note.className='spawn-note';note.textContent='Chance of selecting this encounter group from the eligible game-table rows. Members in one row spawn together. — means unavailable for that time. Actual encounters also depend on spawn limits and world conditions.';body.append(note);
+    if(areas.length>1){const overlap=document.createElement('p');overlap.className='spawn-note';overlap.textContent=`${areas.length} spawn areas ${browse?'available for this Pal':'overlap here'}. Choose an area above; their chances are kept separate.`;body.append(overlap);}
+  };
+  selector.addEventListener('change',render);render();
+}
+function showSpawnAt(pixel,pin=false){
+  if(!habitatVisible()||selectedMarker||spawnPinned&&!pin)return false;
+  let areas=spawnAreasAt(habitatAreas,pixel);const nearby=!areas.length;
+  if(nearby)areas=spawnAreasAt(habitatAreas,pixel,2.5);
+  if(!areas.length){if(!spawnPinned)hideSpawnDetails();return false;}
+  const key=String(nearby)+areas.map(a=>a.id).join(':');
+  if(key!==spawnViewKey){renderSpawnGroups(spawnDetailContent,areas,nearby);spawnViewKey=key;}
+  spawnDetail.hidden=false;spawnPinned=pin;markerTooltip.hidden=true;return true;
+}
+document.querySelector('#spawn-detail-close').addEventListener('click',hideSpawnDetails);
+document.querySelector('#browse-spawns').addEventListener('click',()=>{
+  if(!habitatAreas.length)return;clearMarkerSelection();renderSpawnGroups(spawnDetailContent,habitatAreas,false,true);spawnPinned=true;spawnDetail.hidden=false;
+});
+spawnDetail.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();hideSpawnDetails();canvas.focus();}});
 function markerIcon(path){
   if(!path)return null;
   if(!iconCache.has(path)){
@@ -184,24 +265,27 @@ function updateLayerControls(){
   updateLayerSummary();
 }
 function updateLayerSummary(){
-  const count=visibleMarkers.length-habitatMarkers.length;
-  document.querySelector('#layers-count').textContent=count.toLocaleString('en-US');
+  const count=visibleMarkers.filter(m=>m.category!=='Wild Pal Spawn').length;
+  document.querySelector('#layers-count').textContent=(habitatVisible()?habitatMarkers.length:count).toLocaleString('en-US');
   layerStatus.textContent=markers.length?`${count.toLocaleString('en-US')} of ${markers.length.toLocaleString('en-US')} ${currentMap.name} locations shown. Click a pin for coordinates.`:'No locations loaded.';
 }
 function drawMarkers(){
   markerHits=[];
   if(!visibleMarkers.length)return;
-  const cells=new Map(),cellSize=42,margin=cellSize+24;
+  const cells=new Map(),spawnPins=[],cellSize=42,margin=cellSize+24;
   for(const marker of visibleMarkers){
     const x=camera.x+marker.pixel.x*camera.scale,y=camera.y+marker.pixel.y*camera.scale;
     // Keep the grid fixed to the map so dragging cannot reshuffle clusters.
     // The margin includes every member of a cluster whose center is on screen.
     if(x< -margin||x>width+margin||y< -margin||y>height+margin)continue;
+    if(marker.category==='Wild Pal Spawn'){if(spawnPinsToggle.checked)spawnPins.push({x,y,marker});continue;}
     const key=`${Math.floor(marker.pixel.x*camera.scale/cellSize)},${Math.floor(marker.pixel.y*camera.scale/cellSize)}`;
     let cell=cells.get(key);if(!cell){cell={x:0,y:0,markers:[]};cells.set(key,cell);}
     cell.x+=marker.pixel.x;cell.y+=marker.pixel.y;cell.markers.push(marker);
   }
   context.save();context.textAlign='center';context.textBaseline='middle';context.font='bold 11px Segoe UI,Arial,sans-serif';
+  // Small fixed-position spawn pins keep dense heatmaps readable at all zooms.
+  for(const {x,y,marker}of spawnPins){context.beginPath();context.arc(x,y,2.5,0,Math.PI*2);context.fillStyle='#a78beb';context.fill();context.lineWidth=1;context.strokeStyle='#edf8ff';context.stroke();markerHits.push({x,y,r:7,markers:[marker]});}
   for(const cell of cells.values()){
     const count=cell.markers.length,x=camera.x+cell.x/count*camera.scale,y=camera.y+cell.y/count*camera.scale,cluster=count>1,r=cluster?16:14;
     if(x< -24||x>width+24||y< -24||y>height+24)continue;
@@ -321,6 +405,7 @@ function renderGradeLoot(marker,pools){
   if(marker.metadata?.onlyOnePrize)markerLoot.append(chestNote('Only one prize position is active in this oil-rig selection group.'));
 }
 function selectMarker(marker){
+  hideSpawnDetails();markerSpawns.hidden=true;markerSpawns.replaceChildren();
   selectedMarker=marker;pinnedPosition=marker.pixel;cursor=null;
   markerDetail.hidden=false;
   document.querySelector('#marker-detail-dot').src=marker.icon||categoryById.get(marker.category).icon;
@@ -334,9 +419,13 @@ function selectMarker(marker){
   for(const link of markerWikiLinks(marker,palRoster)){const a=document.createElement('a');a.href=link.href;a.textContent=link.label;links.append(a);}
   document.querySelector('#marker-share-url').hidden=true;document.querySelector('#marker-share-status').textContent='';document.querySelector('#copy-marker-link').textContent='Copy link';
   showChestLoot(marker);
+  if(marker.category==='Wild Pal Spawn'){
+    const areas=spawnAreasAt(habitatAreas,marker.pixel).filter(a=>Math.abs(a.worldZ-(marker.metadata?.z??a.worldZ))<1);
+    if(areas.length){markerSpawns.hidden=false;renderSpawnGroups(markerSpawns,areas);}
+  }
   markerTooltip.hidden=true;scheduleDraw();
 }
-function clearMarkerSelection(){selectedMarker=null;markerDetail.hidden=true;markerLoot.hidden=true;}
+function clearMarkerSelection(){selectedMarker=null;markerDetail.hidden=true;markerLoot.hidden=true;markerSpawns.hidden=true;hideSpawnDetails();}
 document.querySelector('#copy-marker-link').addEventListener('click',async()=>{
   const marker=selectedMarker;if(!marker)return;
   const map=Object.keys(mapConfigs).find(key=>mapConfigs[key]===currentMap);
@@ -424,6 +513,7 @@ function resize(){
 }
 function zoomAt(factor,point={x:width/2,y:height/2}){
   if(!loaded)return;
+  if(!spawnPinned)hideSpawnDetails();
   const pixel=screenToPixel(point.x,point.y,camera);
   camera.scale=Math.max(fitScale*.5,Math.min(fitScale*12,camera.scale*factor));
   camera.x=point.x-pixel.x*camera.scale;camera.y=point.y-pixel.y*camera.scale;constrain();scheduleDraw();
@@ -443,9 +533,9 @@ canvas.addEventListener('pointermove',event=>{
   if(previous){
     if(pressStart&&Math.hypot(point.x-pressStart.x,point.y-pressStart.y)>6)pressMoved=true;
     pointers.set(event.pointerId,point);
-    if(pointers.size===1){camera.x+=point.x-previous.x;camera.y+=point.y-previous.y;constrain();cursor=point;markerTooltip.hidden=true;}
+    if(pointers.size===1){camera.x+=point.x-previous.x;camera.y+=point.y-previous.y;constrain();cursor=point;markerTooltip.hidden=true;if(!spawnPinned)hideSpawnDetails();}
     else if(pointers.size>=2){const next=pinchState();if(lastPinch&&lastPinch.distance>0){zoomAt(next.distance/lastPinch.distance,lastPinch);camera.x+=next.x-lastPinch.x;camera.y+=next.y-lastPinch.y;constrain();}lastPinch=next;cursor=null;}
-  }else if(event.pointerType!=='touch'){cursor=point;showMarkerTooltip(point);}
+  }else if(event.pointerType!=='touch'){cursor=point;showMarkerTooltip(point);showSpawnAt(screenToPixel(point.x,point.y,camera));}
   scheduleDraw();
 });
 function endPointer(event){
@@ -453,7 +543,7 @@ function endPointer(event){
     const at=position(event),hit=markerHit(at);
     if(hit?.markers.length===1)selectMarker(hit.markers[0]);
     else if(hit?.markers.length>1){markerTooltip.hidden=true;zoomAt(2,at);}
-    else{const pixel=screenToPixel(at.x,at.y,camera);if(onMap(pixel)){clearMarkerSelection();pinnedPosition=pixel;scheduleDraw();}}
+    else{const pixel=screenToPixel(at.x,at.y,camera);if(onMap(pixel)){clearMarkerSelection();pinnedPosition=pixel;showSpawnAt(pixel,true);scheduleDraw();}}
   }
   pointers.delete(event.pointerId);lastPinch=null;
   pressStart=null;
@@ -517,7 +607,7 @@ function loadImage(){loaded=false;loading.hidden=false;error.hidden=true;control
 async function focusLinkedMarker(){
   if(!loaded||!markers.length||!pendingLinkedMarker)return;
   const linkedId=pendingLinkedMarker;pendingLinkedMarker=null;
-  if(linkedParams.get('pal')&&linkedId.startsWith('spawn:')){const pal=palRoster.find(p=>p.id===linkedParams.get('pal'));if(pal){document.querySelector('#pals-tab').click();habitatTime=linkedParams.get('time')==='night'?'night':'day';for(const b of document.querySelectorAll('[data-habitat-time]'))b.setAttribute('aria-pressed',String(b.dataset.habitatTime===habitatTime));await selectHabitat(pal.id,pal.name);}}
+  if(linkedParams.get('pal')&&linkedId.startsWith('spawn:')){const pal=palRoster.find(p=>p.id===linkedParams.get('pal'));if(pal){document.querySelector('#pals-tab').click();habitatTime=['all','night'].includes(linkedParams.get('time'))?linkedParams.get('time'):'day';for(const b of document.querySelectorAll('[data-habitat-time]'))b.setAttribute('aria-pressed',String(b.dataset.habitatTime===habitatTime));await selectHabitat(pal.id,pal.name);}}
   const marker=[...markers,...habitatMarkers].find(m=>m.id===linkedId);
   if(!marker)return;
   activeCategories.clear();activeCategories.add(marker.category);

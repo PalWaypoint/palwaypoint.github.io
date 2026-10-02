@@ -25,7 +25,7 @@ export function initCaptureTracker(onHabitat=()=>{}){
   let progress=readCaptureProgress(),filter='all';
   const list=document.querySelector('#pal-list'), search=document.querySelector('#pal-search');
   const summary=document.querySelector('#capture-summary'), filters=document.querySelector('#capture-filters');
-  const labels={uncaught:'Uncaught',caught:'Caught',complete:'Complete (12 catches)'};
+  const labels={uncaught:'Uncaught',caught:'Caught',complete:'Complete (5/5 captures)'};
   const buttons=new Map();
   for(const value of ['all','uncaught','caught','complete']){
     const button=document.createElement('button');button.type='button';button.textContent=value==='all'?'All':value==='complete'?'Complete':labels[value];
