@@ -122,6 +122,7 @@ function refreshHabitat(){
 async function selectHabitat(id,name=id){
   selectedPal=id;selectedPalName=name;const generation=++habitatGeneration;
   document.querySelector('#habitat-controls').hidden=false;
+  document.querySelector('#habitat-options').hidden=false;
   document.querySelector('#habitat-name').textContent=name;
   document.querySelector('#habitat-profile').href=`./wiki.html#pal/${encodeURIComponent(id)}`;
   document.querySelector('#habitat-status').textContent='Loading habitat…';
@@ -132,7 +133,7 @@ async function selectHabitat(id,name=id){
 for(const button of document.querySelectorAll('[data-habitat-time]'))button.addEventListener('click',()=>{
   habitatTime=button.dataset.habitatTime;for(const b of document.querySelectorAll('[data-habitat-time]'))b.setAttribute('aria-pressed',String(b===button));clearMarkerSelection();refreshHabitat();
 });
-document.querySelector('#clear-habitat').addEventListener('click',()=>{selectedPal=null;habitatGeneration++;habitatMarkers=[];habitatAreas=[];heatSurface=null;document.querySelector('#habitat-controls').hidden=true;clearMarkerSelection();refreshVisibleMarkers();});
+document.querySelector('#clear-habitat').addEventListener('click',()=>{selectedPal=null;habitatGeneration++;habitatMarkers=[];habitatAreas=[];heatSurface=null;document.querySelector('#habitat-controls').hidden=true;document.querySelector('#habitat-options').hidden=true;clearMarkerSelection();refreshVisibleMarkers();});
 heatmapToggle.addEventListener('change',scheduleDraw);
 spawnPinsToggle.addEventListener('change',scheduleDraw);
 function buildHeatSurface(){
