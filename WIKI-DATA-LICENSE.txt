@@ -65,3 +65,5 @@ DT_PalSpawnerPlacement and DT_PaldexDistributionData. Source-game conditions
 and raw point counts are retained. No competitor content supplies these data.
 Arkive's extractor is a reference for the table joins:
 https://github.com/arkive-games/arkive/tree/master/tools/apps/palworld
+
+October 2, 2026: loot-tables.json is independently generated from installed Steam build 25246127: DT_ItemLotteryDataTable and DT_FieldLotteryNameDataTable. Region labels use installed English localization; pool availability is joined to independently recovered chest spawner records. Grades and slots remain separate, with normalized weight shares and explicit slot activation. No competitor site supplies these tables. Underlying game content belongs to Pocketpair.

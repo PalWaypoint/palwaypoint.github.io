@@ -1,8 +1,11 @@
 import {pixelToGame, screenToPixel} from './coordinates.js';
 import {mapConfigs} from './map-config.js?v=recovery-2';
 import {TerrainElevation} from './elevation.js';
-import {loadMarkers,loadCategories,markerCategories,categoryById,initCaptureTracker,regionAtPixel} from './markers.js?v=recovery-2';
+import {loadMarkers,loadCategories,markerCategories,categoryById,initCaptureTracker,regionAtPixel} from './markers.js?v=loot-1';
 import {loadPalHabitats,habitatFor,worldPixel,spawnMarkers} from './pal-habitats.js?v=recovery-2';
+import {palRoster} from './markers.js?v=loot-1';
+import {markerViewUrl,markerWikiLinks} from './map-links.js';
+import {loadLootTables,poolIdsFor} from './chest-loot.js';
 
 initCaptureTracker(selectHabitat);
 
@@ -63,6 +66,8 @@ let pinnedPosition=null,pressStart=null,pressMoved=false;
 const linkedParams=new URLSearchParams(location.search);
 let pendingLinkedMarker=linkedParams.get('marker');
 let currentMap=mapConfigs[linkedParams.get('map')]||mapConfigs.islands,mapGeneration=0;
+let linkedLootPool=linkedParams.get('loot');
+if(linkedParams.get('category')){activeCategories.clear();activeCategories.add(linkedParams.get('category'));}
 const categoriesReady=loadCategories();
 let elevation = new TerrainElevation(()=>{if(loaded)updateReadout();},currentMap.terrain);
 
@@ -85,6 +90,7 @@ function saveProgress(){
 }
 function markerMatches(marker){
   if(!activeCategories.has(marker.category))return false;
+  if(linkedLootPool&&marker.loot!=='game:'+linkedLootPool&&!marker.metadata?.pools?.some(p=>p.id===linkedLootPool))return false;
   if(hideCompleted&&completedMarkers.has(marker.id))return false;
   if(!searchTerm)return true;
   const category=categoryById.get(marker.category);
@@ -244,7 +250,9 @@ async function showChestLoot(marker){
   if(!marker.loot)return;
   markerLoot.append(chestNote('Loading possible loot…'));
   try{
-    const data=await loadChestTips();if(selectedMarker!==marker)return;
+    const [data,catalog]=await Promise.all([loadChestTips(),loadLootTables()]);if(selectedMarker!==marker)return;
+    const pools=poolIdsFor(marker,data).map(id=>catalog.pools.find(p=>p.id===id)).filter(Boolean);
+    if(pools.length){renderGradeLoot(marker,pools);return;}
     let tip=data.tips?.[marker.loot];markerLoot.replaceChildren();
     if(tip?.pools){
       const variants=tip.pools, label=document.createElement('label');label.textContent='Chest element ';
@@ -284,6 +292,34 @@ async function showChestLoot(marker){
     const source=document.createElement('a');source.href='./wiki.html#chest-loot';source.textContent='Full loot tables';markerLoot.append(source);
   }catch{if(selectedMarker===marker)markerLoot.replaceChildren(chestNote('Chest loot could not load.'));}
 }
+function renderGradeLoot(marker,pools){
+  markerLoot.replaceChildren();
+  const heading=document.createElement('h3');heading.textContent='Possible loot by chest grade';markerLoot.append(heading);
+  const poolSelect=document.createElement('select');poolSelect.setAttribute('aria-label','Loot pool');
+  for(const p of pools){const o=document.createElement('option');o.value=p.id;o.textContent=p.region+' · '+p.label;poolSelect.append(o);}
+  const poolLabel=document.createElement('label');poolLabel.textContent='Chest pool ';poolLabel.append(poolSelect);markerLoot.append(poolLabel);
+  const gradeSelect=document.createElement('select');gradeSelect.setAttribute('aria-label','Chest grade');
+  const gradeLabel=document.createElement('label');gradeLabel.textContent='Chest grade ';gradeLabel.append(gradeSelect);markerLoot.append(gradeLabel);
+  const body=document.createElement('div');markerLoot.append(body);
+  const full=document.createElement('a');full.textContent='Full loot tables for this chest';markerLoot.append(full);
+  function render(){
+    const pool=pools.find(p=>p.id===poolSelect.value);body.replaceChildren();full.href='./wiki.html#chest-loot/'+encodeURIComponent('game:'+pool.id);
+    for(const slot of pool.grades[gradeSelect.value]||[]){
+      const caption=chestNote(`Slot ${slot.slot} · ${slot.activation===100?'Always rolls':slot.activation.toLocaleString('en-US')+'% chance to roll'}`);body.append(caption);
+      const list=document.createElement('ul');list.className='marker-loot-list';body.append(list);
+      for(const entry of slot.entries.slice(0,8)){
+        const row=document.createElement('li');if(entry.icon){const img=document.createElement('img');img.src=entry.icon;img.alt='';img.loading='lazy';row.append(img);}
+        const name=document.createElement('a');name.href='./wiki.html#item/'+encodeURIComponent(entry.id);name.textContent=entry.name+' ×'+(entry.min===entry.max?entry.min.toLocaleString('en-US'):entry.min.toLocaleString('en-US')+'–'+entry.max.toLocaleString('en-US'));
+        const chance=document.createElement('strong');chance.textContent=Number(entry.share.toFixed(2))+'%';row.append(name,chance);list.append(row);
+      }
+      if(slot.entries.length>8)body.append(chestNote(`${slot.entries.length-8} more entries in the full table.`));
+    }
+  }
+  function changePool(){const pool=pools.find(p=>p.id===poolSelect.value);gradeSelect.replaceChildren();for(const grade of Object.keys(pool.grades).sort((a,b)=>a-b)){const o=document.createElement('option');o.value=grade;o.textContent='Grade '+grade;gradeSelect.append(o);}render();}
+  poolSelect.addEventListener('change',changePool);gradeSelect.addEventListener('change',render);changePool();
+  markerLoot.append(chestNote('Item percentages are shares within the selected grade and slot. Each slot rolls separately. A location does not guarantee every listed grade; chest appearance, grade selection and respawn odds are not recorded.'));
+  if(marker.metadata?.onlyOnePrize)markerLoot.append(chestNote('Only one prize position is active in this oil-rig selection group.'));
+}
 function selectMarker(marker){
   selectedMarker=marker;pinnedPosition=marker.pixel;cursor=null;
   markerDetail.hidden=false;
@@ -294,10 +330,21 @@ function selectMarker(marker){
   const trackable=isTrackable(marker);
   markerProgressControl.hidden=!trackable;markerProgressNote.hidden=!trackable;
   if(trackable){markerProgressCheckbox.checked=completedMarkers.has(marker.id);markerProgressLabel.textContent=progressLabel(marker.category);}
+  const links=document.querySelector('#marker-wiki-links');links.replaceChildren();
+  for(const link of markerWikiLinks(marker,palRoster)){const a=document.createElement('a');a.href=link.href;a.textContent=link.label;links.append(a);}
+  document.querySelector('#marker-share-url').hidden=true;document.querySelector('#marker-share-status').textContent='';document.querySelector('#copy-marker-link').textContent='Copy link';
   showChestLoot(marker);
   markerTooltip.hidden=true;scheduleDraw();
 }
 function clearMarkerSelection(){selectedMarker=null;markerDetail.hidden=true;markerLoot.hidden=true;}
+document.querySelector('#copy-marker-link').addEventListener('click',async()=>{
+  const marker=selectedMarker;if(!marker)return;
+  const map=Object.keys(mapConfigs).find(key=>mapConfigs[key]===currentMap);
+  const url=new URL(markerViewUrl(location.href,map,{...marker,palId:marker.category==='Wild Pal Spawn'?selectedPal:undefined},camera.scale/fitScale));
+  if(marker.category==='Wild Pal Spawn')url.searchParams.set('time',habitatTime);
+  try{await navigator.clipboard.writeText(url.href);if(selectedMarker===marker){document.querySelector('#copy-marker-link').textContent='Copied';document.querySelector('#marker-share-status').textContent='Link opens this location zoomed in.';}}
+  catch{if(selectedMarker===marker){const input=document.querySelector('#marker-share-url');input.value=url.href;input.hidden=false;input.focus();input.select();document.querySelector('#marker-share-status').textContent='Copy the selected link.';}}
+});
 function readCoordinates(x,y,label){
   const point=screenToPixel(x,y,camera);
   const valid=loaded&&onMap(point);
@@ -446,7 +493,7 @@ function toggleLayers(open){
 layersToggle.addEventListener('click',()=>toggleLayers(mapBody.classList.contains('sidebar-collapsed')));
 document.querySelector('#layers-close').addEventListener('click',()=>toggleLayers(false));
 sidebarBackdrop.addEventListener('click',()=>toggleLayers(false));
-document.querySelector('#layers-all').addEventListener('click',()=>{for(const marker of markers)activeCategories.add(marker.category);updateLayerControls();refreshVisibleMarkers();});
+document.querySelector('#layers-all').addEventListener('click',()=>{linkedLootPool=null;for(const marker of markers)activeCategories.add(marker.category);updateLayerControls();refreshVisibleMarkers();});
 document.querySelector('#layers-none').addEventListener('click',()=>{for(const marker of markers)activeCategories.delete(marker.category);updateLayerControls();refreshVisibleMarkers();});
 hideCompletedCheckbox.addEventListener('change',()=>{hideCompleted=hideCompletedCheckbox.checked;try{localStorage.setItem(hideCompletedStorageKey,String(hideCompleted));}catch{}refreshVisibleMarkers();});
 markerSearch.addEventListener('input',()=>{searchTerm=markerSearch.value.trim().toLowerCase();updateLayerControls();refreshVisibleMarkers();});
@@ -467,14 +514,16 @@ copyTeleport.addEventListener('click',async()=>{
 });
 document.querySelector('#retry').addEventListener('click',()=>{error.hidden=true;loading.hidden=false;loadImage();});
 function loadImage(){loaded=false;loading.hidden=false;error.hidden=true;controls.forEach(button=>button.disabled=true);image.src=currentMap.image;}
-function focusLinkedMarker(){
+async function focusLinkedMarker(){
   if(!loaded||!markers.length||!pendingLinkedMarker)return;
-  const marker=markers.find(m=>m.id===pendingLinkedMarker);pendingLinkedMarker=null;
+  const linkedId=pendingLinkedMarker;pendingLinkedMarker=null;
+  if(linkedParams.get('pal')&&linkedId.startsWith('spawn:')){const pal=palRoster.find(p=>p.id===linkedParams.get('pal'));if(pal){document.querySelector('#pals-tab').click();habitatTime=linkedParams.get('time')==='night'?'night':'day';for(const b of document.querySelectorAll('[data-habitat-time]'))b.setAttribute('aria-pressed',String(b.dataset.habitatTime===habitatTime));await selectHabitat(pal.id,pal.name);}}
+  const marker=[...markers,...habitatMarkers].find(m=>m.id===linkedId);
   if(!marker)return;
   activeCategories.clear();activeCategories.add(marker.category);
   expandedGroups.add(categoryById.get(marker.category)?.group);
   hideCompleted=false;hideCompletedCheckbox.checked=false;
-  camera.scale=fitScale*4;camera.x=width/2-marker.pixel.x*camera.scale;camera.y=height/2-marker.pixel.y*camera.scale;
+  const linkedZoom=Number(linkedParams.get('zoom'));camera.scale=fitScale*Math.max(4,Math.min(12,Number.isFinite(linkedZoom)?linkedZoom:4));camera.x=width/2-marker.pixel.x*camera.scale;camera.y=height/2-marker.pixel.y*camera.scale;
   updateLayerControls();refreshVisibleMarkers();selectMarker(marker);
 }
 image.onload=()=>{loaded=true;loading.hidden=true;error.hidden=true;controls.forEach(button=>button.disabled=false);resize();fit();focusLinkedMarker();};
@@ -498,7 +547,7 @@ new ResizeObserver(resize).observe(canvas);
 if(window.matchMedia('(max-width:700px)').matches)toggleLayers(false);
 resize();loadImage();
 Promise.all([categoriesReady,loadMarkers(currentMap)]).then(([,data])=>{if(mapGeneration)return;markers=data;refreshVisibleMarkers();updateLayerControls();focusLinkedMarker();}).catch(()=>{layerStatus.textContent='Location markers could not load. Reload to retry.';document.querySelector('#layers-count').textContent='!';});
-if(linkedParams.get('pal')){
+if(linkedParams.get('pal')&&!linkedParams.get('marker')?.startsWith('spawn:')){
   document.querySelector('#pals-tab').click();
   selectHabitat(linkedParams.get('pal'),linkedParams.get('palName')||linkedParams.get('pal'));
 }
