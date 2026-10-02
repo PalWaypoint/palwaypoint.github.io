@@ -67,3 +67,12 @@ Arkive's extractor is a reference for the table joins:
 https://github.com/arkive-games/arkive/tree/master/tools/apps/palworld
 
 October 2, 2026: loot-tables.json is independently generated from installed Steam build 25246127: DT_ItemLotteryDataTable and DT_FieldLotteryNameDataTable. Region labels use installed English localization; pool availability is joined to independently recovered chest spawner records. Grades and slots remain separate, with normalized weight shares and explicit slot activation. No competitor site supplies these tables. Underlying game content belongs to Pocketpair.
+ 
+Effigy upgrade tables, costs and localized ability descriptions: directly
+read from the user's installed Palworld Steam build 25246127 on October 2,
+2026. Source packages: DT_PlayerStatusRankMasterDataTable, English
+DT_UI_Common_Text_Common and DT_ItemNameText_Common. The normalized
+effigies.json records retain source row IDs and extracted-table hashes. Underlying
+game data/text belongs to Pocketpair. Effect values are retained as stored;
+the table does not provide unconditional capture probabilities. No
+competitor website supplies these records.

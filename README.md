@@ -8,7 +8,7 @@ An unofficial browser map focused on the in-game X/Y coordinates at the pointer,
 
 Open `wiki.html` for the Pal catalog (288 numbered Pals), item catalog (1,892 records), ranch tables, breeding planner, technology, fishing, chest loot, base progression and merchant inventories. Checklist progress and capture status share the map's local browser storage and sync between open tabs. Checklist links focus individual pins on either map.
 
-New wiki tables use server-derived Palworld Atlas Data (MIT) and independently extracted Arkive data (CC BY-NC 4.0). See `WIKI-DATA-LICENSE.txt` and the About page for snapshot versions, attribution and coverage. Base research/raids, effigy reward tables, target-to-parents breeding search and progress export remain future work.
+New wiki tables use server-derived Palworld Atlas Data (MIT) and independently extracted Arkive data (CC BY-NC 4.0). See `WIKI-DATA-LICENSE.txt` and the About page for snapshot versions, attribution and coverage. Progress can be exported and imported from the Back up & restore page. Effigy ability descriptions, upgrade costs and recorded effects come from installed-game tables. Breeding supports reverse parent search with caught-parent filtering. Base research/raids remain future work.
 
 
 ## Local preview

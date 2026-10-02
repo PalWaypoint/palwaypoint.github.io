@@ -21,8 +21,8 @@ export function regionAtPixel(point,mapName){
 }
 export function initCaptureTracker(onHabitat=()=>{}){
   const storageKey='palwaypoint-captures-v1', valid=new Set(palRoster.map(pal=>pal.id));
-  let progress={},filter='all';
-  try{const saved=JSON.parse(localStorage.getItem(storageKey)||'{}');if(saved&&typeof saved==='object'&&!Array.isArray(saved))for(const [id,state] of Object.entries(saved))if(valid.has(id)&&['caught','complete'].includes(state))progress[id]=state;}catch{}
+  function readCaptureProgress(){try{const saved=JSON.parse(localStorage.getItem(storageKey)||'{}');if(saved&&typeof saved==='object'&&!Array.isArray(saved))return Object.fromEntries(Object.entries(saved).filter(([id,state])=>!['__proto__','constructor','prototype'].includes(id)&&['caught','complete'].includes(state)));}catch{}return {};}
+  let progress=readCaptureProgress(),filter='all';
   const list=document.querySelector('#pal-list'), search=document.querySelector('#pal-search');
   const summary=document.querySelector('#capture-summary'), filters=document.querySelector('#capture-filters');
   const labels={uncaught:'Uncaught',caught:'Caught',complete:'Complete (12 catches)'};
@@ -32,7 +32,7 @@ export function initCaptureTracker(onHabitat=()=>{}){
     button.addEventListener('click',()=>{filter=value;render();});filters.append(button);buttons.set(value,button);
   }
   function render(){
-    const states=Object.values(progress), complete=states.filter(state=>state==='complete').length;
+    const states=Object.entries(progress).filter(([id])=>valid.has(id)).map(([,state])=>state), complete=states.filter(state=>state==='complete').length;
     summary.textContent=`Caught ${states.length}/${palRoster.length} · Complete ${complete}`;
     for(const [value,button] of buttons)button.setAttribute('aria-pressed',String(value===filter));
     const query=search.value.trim().toLowerCase();list.replaceChildren();
@@ -62,7 +62,7 @@ export function initCaptureTracker(onHabitat=()=>{}){
   });
   window.addEventListener('storage',event=>{
     if(event.key!==storageKey&&event.key!==null)return;
-    progress={};try{const saved=JSON.parse(localStorage.getItem(storageKey)||'{}');if(saved&&typeof saved==='object'&&!Array.isArray(saved))for(const [id,state] of Object.entries(saved))if(valid.has(id)&&['caught','complete'].includes(state))progress[id]=state;}catch{}
+    progress=readCaptureProgress();
     render();
   });
   search.addEventListener('input',render);render();

@@ -1,9 +1,9 @@
 import {pixelToGame, screenToPixel} from './coordinates.js';
 import {mapConfigs} from './map-config.js?v=recovery-2';
 import {TerrainElevation} from './elevation.js';
-import {loadMarkers,loadCategories,markerCategories,categoryById,initCaptureTracker,regionAtPixel} from './markers.js?v=loot-1';
+import {loadMarkers,loadCategories,markerCategories,categoryById,initCaptureTracker,regionAtPixel} from './markers.js?v=tools-1';
 import {loadPalHabitats,habitatFor,worldPixel,spawnMarkers} from './pal-habitats.js?v=recovery-2';
-import {palRoster} from './markers.js?v=loot-1';
+import {palRoster} from './markers.js?v=tools-1';
 import {markerViewUrl,markerWikiLinks} from './map-links.js';
 import {loadLootTables,poolIdsFor} from './chest-loot.js?v=loot-2';
 
@@ -554,8 +554,9 @@ if(linkedParams.get('pal')&&!linkedParams.get('marker')?.startsWith('spawn:')){
 document.querySelector('#map-name').textContent=currentMap.name.toUpperCase();
 mapButtons.forEach(button=>button.setAttribute('aria-pressed',String(mapConfigs[button.dataset.map]===currentMap)));
 window.addEventListener('storage',event=>{
-  if(event.key!==progressStorageKey&&event.key!==null)return;
-  completedMarkers.clear();for(const id of readProgress())completedMarkers.add(id);
+  if(![progressStorageKey,hideCompletedStorageKey,null].includes(event.key))return;
+  if(event.key===progressStorageKey||event.key===null){completedMarkers.clear();for(const id of readProgress())completedMarkers.add(id);}
+  if(event.key===hideCompletedStorageKey||event.key===null){try{hideCompleted=localStorage.getItem(hideCompletedStorageKey)==='true';}catch{hideCompleted=false;}hideCompletedCheckbox.checked=hideCompleted;}
   if(selectedMarker)markerProgressCheckbox.checked=completedMarkers.has(selectedMarker.id);
   updateLayerControls();refreshVisibleMarkers();
 });
