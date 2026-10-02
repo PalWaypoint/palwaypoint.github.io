@@ -28,6 +28,9 @@ jobs:
           mkdir -p _site
           cp index.html coordinates.js elevation.js map-config.js map.js markers.js marker-categories.json markers.json tree-markers.json chest-tips.json style.css world-map.webp tree-map.webp MARKER-DATA-LICENSE.txt _site/
           cp wiki.html wiki.js wiki.css wiki-logic.js wiki-data.json WIKI-DATA-LICENSE.txt _site/
+          if [ -f progress-backup.js ]; then
+            cp progress-backup.js effigies.json _site/
+          fi
           if [ -f loot-tables.json ]; then
             cp map-links.js chest-loot.js loot-tables.json _site/
           fi
