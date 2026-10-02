@@ -1,0 +1,34 @@
+research-independent/game-recovery/sdk/
+research-independent/game-recovery/dotnet-sdk.zip
+research-independent/game-recovery/packages/
+research-independent/game-recovery/dotnet-home/
+research-independent/game-recovery/exports/
+research-independent/game-recovery/definitions/
+research-independent/game-recovery/actors.json
+research-independent/game-recovery/actor-audit.json
+research-independent/game-recovery/reader/bin/
+research-independent/game-recovery/reader/obj/
+research-independent/prior-map-audit-reference.json
+research-independent/game-recovery/cave-inspection/exports/
+research-independent/game-recovery/cave-inspection/meshes/
+research-independent/game-recovery/cave-inspection/geometry-features.json
+research-independent/game-recovery/cave-inspection/geometry-comparison.json
+
+# Local agent guidance and internal continuity documents
+.private/
+AGENTS.md
+AGENTS.override.md
+agent.md
+AGENT.md
+agents.md
+.agents/
+GITHUB-CONNECTION.md
+DATA-RECOVERY.md
+MAP-OMISSIONS.md
+
+# Local extraction work, audit records, and upload staging
+research-independent/
+publish-*/
+PalWaypoint-*.zip
+mobile-links-preview.html
+oodle-data-shared.dll
