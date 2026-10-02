@@ -15,3 +15,5 @@ footer{align-items:center;flex-wrap:wrap}.coffee-link{display:inline-flex;align-
 
 .team-quick-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:15px 0 22px}.team-quick-stats>div{padding:12px 10px;border:1px solid #35616a;border-radius:8px;background:#11323a}.team-quick-stats span{display:block;color:var(--muted);font-size:.75rem}.team-quick-stats strong{display:block;color:var(--accent);font-size:.95rem;margin-top:5px;font-variant-numeric:tabular-nums}@media(max-width:700px){.team-quick-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:700px){.site-nav>a,.systems-menu>summary{padding:8px 4px}} .team-manager input,.team-manager select,.team-field input,.team-field select{color:#e7f5f4}
+
+.inherit-field{display:grid;gap:6px;margin:10px 0}.inherit-field select,.inherit-field input{width:100%;min-width:0}.team-passive-grid fieldset{min-width:0}#team-buffs,#team-inheritance{margin-top:32px;scroll-margin-top:100px}
