@@ -24,7 +24,7 @@ export const mapConfigs = {
   islands: {
     name: 'Palpagos Islands',
     image: './world-map.webp?v=paldex-map-1',
-    markers: './markers.json?v=game-recovery-1',
+    markers: './markers.json?v=recovery-2',
     terrain: islandsTerrain,
     sourceUrl,
     calibration: calibration(islandsTerrain)
@@ -32,7 +32,7 @@ export const mapConfigs = {
   tree: {
     name: 'World Tree',
     image: './tree-map.webp?v=paldex-map-1',
-    markers: './tree-markers.json?v=game-recovery-1',
+    markers: './tree-markers.json?v=recovery-2',
     terrain: treeTerrain,
     sourceUrl,
     calibration: calibration(treeTerrain)

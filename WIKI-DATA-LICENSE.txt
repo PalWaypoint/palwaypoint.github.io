@@ -58,3 +58,10 @@ Extracted independently with CUE4Parse (Apache-2.0),
 https://github.com/FabianFG/CUE4Parse , and PalworldModding mappings,
 https://github.com/PalworldModding/UsefulFiles . Game assets belong to Pocketpair.
 No competitor map content supplies the recovered data.
+
+October 1, 2026: Pal profile habitat summaries and pal-spawns.json are derived
+from the user's installed build 25246127, using DT_PalWildSpawner,
+DT_PalSpawnerPlacement and DT_PaldexDistributionData. Source-game conditions
+and raw point counts are retained. No competitor content supplies these data.
+Arkive's extractor is a reference for the table joins:
+https://github.com/arkive-games/arkive/tree/master/tools/apps/palworld

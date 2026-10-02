@@ -1,9 +1,10 @@
 import {pixelToGame, screenToPixel} from './coordinates.js';
-import {mapConfigs} from './map-config.js?v=game-recovery-1';
+import {mapConfigs} from './map-config.js?v=recovery-2';
 import {TerrainElevation} from './elevation.js';
-import {loadMarkers,loadCategories,markerCategories,categoryById,initCaptureTracker,regionAtPixel} from './markers.js?v=game-recovery-1';
+import {loadMarkers,loadCategories,markerCategories,categoryById,initCaptureTracker,regionAtPixel} from './markers.js?v=recovery-2';
+import {loadPalHabitats,habitatFor,worldPixel,spawnMarkers} from './pal-habitats.js?v=recovery-2';
 
-initCaptureTracker();
+initCaptureTracker(selectHabitat);
 
 const canvas = document.querySelector('#map');
 const context = canvas.getContext('2d');
@@ -44,6 +45,7 @@ const activeCategories=new Set(['Fast Travel']);
 const expandedGroups=new Set(['Collectibles']);
 const iconCache=new Map();
 let markers=[],visibleMarkers=[],markerHits=[],selectedMarker=null,hoveredMarker=null,searchTerm='';
+let habitatData=null,selectedPal=null,selectedPalName='',habitatTime='day',habitatGeneration=0,habitatMarkers=[];
 let chestTipsPromise=null;
 let teleportText='';
 let copyResetTimer=0;
@@ -70,6 +72,7 @@ function onMap(point){return point.x>=0&&point.y>=0&&point.x<=image.naturalWidth
 function decimal(value){return (Math.abs(value)<.005?0:value).toFixed(2);}
 function isTrackable(marker){return marker.category==='Dungeon'||!!categoryById.get(marker.category)?.trackable;}
 function progressLabel(category){
+  if(category==='Cave Entrance')return 'Explored';
   if(category==='Fast Travel')return 'Unlocked';
   if(['Watchtower','Skyland Warp Altar'].includes(category))return 'Activated';
   if(category==='Bounty')return 'Defeated';
@@ -87,7 +90,41 @@ function markerMatches(marker){
   const category=categoryById.get(marker.category);
   return `${marker.name} ${marker.detail} ${category?.name} ${category?.group}`.toLowerCase().includes(searchTerm);
 }
-function refreshVisibleMarkers(){visibleMarkers=markers.filter(markerMatches);updateLayerSummary();scheduleDraw();}
+function refreshVisibleMarkers(){visibleMarkers=[...markers.filter(markerMatches),...habitatMarkers];updateLayerSummary();scheduleDraw();}
+function refreshHabitat(){
+  habitatMarkers=[];
+  if(selectedPal&&habitatData){
+    categoryById.set('Wild Pal Spawn',{name:'Wild Pal Spawn',icon:`./icons/pals/${selectedPal}.webp`,trackable:false});
+    habitatMarkers=spawnMarkers(habitatData,selectedPal,currentMap,habitatTime).map(m=>({...m,name:selectedPalName}));
+    const data=habitatFor(habitatData,selectedPal,currentMap.name);
+    document.querySelector('#habitat-status').textContent=data?`${habitatMarkers.length.toLocaleString('en-US')} possible ${habitatTime} spawn locations on ${currentMap.name}.`:`No wild habitat or field spawn is recorded on ${currentMap.name}.`;
+  }
+  refreshVisibleMarkers();
+}
+async function selectHabitat(id,name=id){
+  selectedPal=id;selectedPalName=name;const generation=++habitatGeneration;
+  document.querySelector('#habitat-controls').hidden=false;
+  document.querySelector('#habitat-name').textContent=name;
+  document.querySelector('#habitat-profile').href=`./wiki.html#pal/${encodeURIComponent(id)}`;
+  document.querySelector('#habitat-status').textContent='Loading habitat…';
+  habitatMarkers=[];clearMarkerSelection();refreshVisibleMarkers();
+  try{const [data]=await Promise.all([loadPalHabitats(),categoriesReady]);if(generation!==habitatGeneration)return;habitatData=data;refreshHabitat();}
+  catch{if(generation===habitatGeneration)document.querySelector('#habitat-status').textContent='Habitat could not load. Choose this Pal again to retry.';}
+}
+for(const button of document.querySelectorAll('[data-habitat-time]'))button.addEventListener('click',()=>{
+  habitatTime=button.dataset.habitatTime;for(const b of document.querySelectorAll('[data-habitat-time]'))b.setAttribute('aria-pressed',String(b===button));clearMarkerSelection();refreshHabitat();
+});
+document.querySelector('#clear-habitat').addEventListener('click',()=>{selectedPal=null;habitatGeneration++;habitatMarkers=[];document.querySelector('#habitat-controls').hidden=true;clearMarkerSelection();refreshVisibleMarkers();});
+function drawHabitat(){
+  if(!selectedPal||!habitatData)return;
+  const cloud=habitatFor(habitatData,selectedPal,currentMap.name)?.[habitatTime]||[];
+  context.save();context.fillStyle=habitatTime==='night'?'#bd9bf7':'#68e7cb';context.globalAlpha=.22;
+  for(const [x,y] of cloud){const p=worldPixel(x,y,currentMap),sx=camera.x+p.x*camera.scale,sy=camera.y+p.y*camera.scale;
+    if(sx< -12||sx>width+12||sy< -12||sy>height+12)continue;
+    context.beginPath();context.arc(sx,sy,Math.min(12,Math.max(3,camera.scale*9)),0,Math.PI*2);context.fill();
+  }
+  context.restore();
+}
 function markerIcon(path){
   if(!path)return null;
   if(!iconCache.has(path)){
@@ -141,7 +178,7 @@ function updateLayerControls(){
   updateLayerSummary();
 }
 function updateLayerSummary(){
-  const count=visibleMarkers.length;
+  const count=visibleMarkers.length-habitatMarkers.length;
   document.querySelector('#layers-count').textContent=count.toLocaleString('en-US');
   layerStatus.textContent=markers.length?`${count.toLocaleString('en-US')} of ${markers.length.toLocaleString('en-US')} ${currentMap.name} locations shown. Click a pin for coordinates.`:'No locations loaded.';
 }
@@ -196,7 +233,7 @@ function showMarkerTooltip(point){
   markerTooltip.style.top=`${Math.max(8,point.y-54)}px`;
 }
 function loadChestTips(){
-  return chestTipsPromise??=fetch('./chest-tips.json?v=game-recovery-1').then(response=>{
+  return chestTipsPromise??=fetch('./chest-tips.json?v=recovery-2').then(response=>{
     if(!response.ok)throw new Error('Chest loot unavailable');
     return response.json();
   });
@@ -301,6 +338,7 @@ function draw(){
   context.imageSmoothingEnabled=true;
   context.imageSmoothingQuality='high';
   context.drawImage(image,camera.x,camera.y,image.naturalWidth*camera.scale,image.naturalHeight*camera.scale);
+  drawHabitat();
   drawMarkers();
   const crosshair=pinnedPosition?{x:camera.x+pinnedPosition.x*camera.scale,y:camera.y+pinnedPosition.y*camera.scale}:cursor;
   if(crosshair&&onMap(screenToPixel(crosshair.x,crosshair.y,camera))){
@@ -444,14 +482,14 @@ image.onerror=()=>{loaded=false;loading.hidden=true;error.hidden=false;controls.
 async function switchMap(key){
   if(!mapConfigs[key]||currentMap===mapConfigs[key])return;
   currentMap=mapConfigs[key];const generation=++mapGeneration;
-  markers=[];visibleMarkers=[];markerHits=[];pinnedPosition=null;cursor=null;regionCursor=null;regionBanner.hidden=true;clearMarkerSelection();markerTooltip.hidden=true;
+  markers=[];visibleMarkers=[];markerHits=[];habitatMarkers=[];pinnedPosition=null;cursor=null;regionCursor=null;regionBanner.hidden=true;clearMarkerSelection();markerTooltip.hidden=true;
   elevation=new TerrainElevation(()=>{if(loaded)updateReadout();},currentMap.terrain);
   document.querySelector('#map-name').textContent=currentMap.name.toUpperCase();
   document.querySelector('#source-link').href=currentMap.sourceUrl;
   for(const button of mapButtons)button.setAttribute('aria-pressed',String(button.dataset.map===key));
   updateLayerControls();layerStatus.textContent='Loading locations…';
   loadImage();
-  try{const [data]=await Promise.all([loadMarkers(currentMap),categoriesReady]);if(generation!==mapGeneration)return;markers=data;refreshVisibleMarkers();updateLayerControls();}
+  try{const [data]=await Promise.all([loadMarkers(currentMap),categoriesReady]);if(generation!==mapGeneration)return;markers=data;refreshHabitat();updateLayerControls();}
   catch{if(generation===mapGeneration){layerStatus.textContent='Location markers could not load. Reload to retry.';document.querySelector('#layers-count').textContent='!';}}
 }
 for(const button of mapButtons)button.addEventListener('click',()=>switchMap(button.dataset.map));
@@ -460,6 +498,10 @@ new ResizeObserver(resize).observe(canvas);
 if(window.matchMedia('(max-width:700px)').matches)toggleLayers(false);
 resize();loadImage();
 Promise.all([categoriesReady,loadMarkers(currentMap)]).then(([,data])=>{if(mapGeneration)return;markers=data;refreshVisibleMarkers();updateLayerControls();focusLinkedMarker();}).catch(()=>{layerStatus.textContent='Location markers could not load. Reload to retry.';document.querySelector('#layers-count').textContent='!';});
+if(linkedParams.get('pal')){
+  document.querySelector('#pals-tab').click();
+  selectHabitat(linkedParams.get('pal'),linkedParams.get('palName')||linkedParams.get('pal'));
+}
 document.querySelector('#map-name').textContent=currentMap.name.toUpperCase();
 mapButtons.forEach(button=>button.setAttribute('aria-pressed',String(mapConfigs[button.dataset.map]===currentMap)));
 window.addEventListener('storage',event=>{

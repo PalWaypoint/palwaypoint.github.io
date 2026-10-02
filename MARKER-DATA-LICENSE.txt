@@ -69,3 +69,20 @@ Extracted independently with CUE4Parse (Apache-2.0),
 https://github.com/FabianFG/CUE4Parse , and PalworldModding mappings,
 https://github.com/PalworldModding/UsefulFiles . Game assets belong to Pocketpair.
 No competitor map content supplies the recovered data.
+
+October 1, 2026 recovery, same installed build: 83 resource-group centers
+derived from actual scene attachments, and quest classifications joined to
+validated quest nodes in NPC dialogue graphs. Wild Pal placement and day/night
+habitat data come directly from DT_PalWildSpawner, DT_PalSpawnerPlacement and
+DT_PaldexDistributionData. Rendering caps each habitat cloud at 800 points;
+raw counts and full game exports remain in the local audit. Spawn row weights
+are not unconditional encounter probabilities. Arkive's independent extractor
+is a reference for game table joins and actor classes:
+https://github.com/arkive-games/arkive/tree/master/tools/apps/palworld
+
+October 1 cave recovery: 18 cave entrance areas derived independently from
+authored game spline control points, baked tunnel-floor start caps and
+corridor boundary vertices. Seventeen names resolve through game region and
+English localization tables. Positions are approximate and not checked in
+gameplay. Approach endpoints may precede the visible rock opening. Full
+transforms, mesh vertices and package hashes remain in the local audit.

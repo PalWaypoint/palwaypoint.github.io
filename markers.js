@@ -19,7 +19,7 @@ export function regionAtPixel(point,mapName){
     return point.x>=minX&&point.x<=maxX&&point.y>=minY&&point.y<=maxY&&pointInRegion(point,region.ring);
   })||null;
 }
-export function initCaptureTracker(){
+export function initCaptureTracker(onHabitat=()=>{}){
   const storageKey='palwaypoint-captures-v1', valid=new Set(palRoster.map(pal=>pal.id));
   let progress={},filter='all';
   try{const saved=JSON.parse(localStorage.getItem(storageKey)||'{}');if(saved&&typeof saved==='object'&&!Array.isArray(saved))for(const [id,state] of Object.entries(saved))if(valid.has(id)&&['caught','complete'].includes(state))progress[id]=state;}catch{}
@@ -51,7 +51,9 @@ export function initCaptureTracker(){
         catch{document.querySelector('#capture-save-note').textContent='Could not save in this browser. Progress lasts until this page closes.';}
         render();document.querySelector(`[data-pal-id="${pal.id}"]`)?.focus();
       });
-      button.dataset.palId=pal.id;row.append(portrait,name,button);list.append(row);
+      const habitat=document.createElement('button');habitat.type='button';habitat.className='pal-habitat-button';habitat.textContent='Map';
+      habitat.setAttribute('aria-label',`View ${pal.name} habitat`);habitat.addEventListener('click',()=>onHabitat(pal.id,pal.name));
+      button.dataset.palId=pal.id;row.append(portrait,name,habitat,button);list.append(row);
     }
     if(!list.children.length){const empty=document.createElement('p');empty.className='capture-help';empty.textContent='No Pals match these filters.';list.append(empty);}
   }
@@ -70,7 +72,7 @@ export const markerCategories=[];
 export const categoryById=new Map();
 
 export async function loadCategories(){
-  const response=await fetch('./marker-categories.json?v=game-recovery-1');
+  const response=await fetch('./marker-categories.json?v=recovery-2');
   if(!response.ok)throw new Error('Marker categories unavailable');
   const categories=await response.json();
   markerCategories.splice(0,markerCategories.length,...categories);
