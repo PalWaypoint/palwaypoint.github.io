@@ -1,6 +1,6 @@
 let pending;
 export function loadLootTables(){
-  return pending??=fetch('./loot-tables.json?v=loot-1').then(r=>{if(!r.ok)throw Error('Loot tables unavailable');return r.json();}).catch(e=>{pending=null;throw e;});
+  return pending??=fetch('./loot-tables.json?v=loot-2').then(r=>{if(!r.ok)throw Error('Loot tables unavailable');return r.json();}).catch(e=>{pending=null;throw e;});
 }
 export function poolIdsFor(marker,tips){
   const tip=tips?.tips?.[marker.loot];

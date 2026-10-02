@@ -5,7 +5,7 @@ import {loadMarkers,loadCategories,markerCategories,categoryById,initCaptureTrac
 import {loadPalHabitats,habitatFor,worldPixel,spawnMarkers} from './pal-habitats.js?v=recovery-2';
 import {palRoster} from './markers.js?v=loot-1';
 import {markerViewUrl,markerWikiLinks} from './map-links.js';
-import {loadLootTables,poolIdsFor} from './chest-loot.js';
+import {loadLootTables,poolIdsFor} from './chest-loot.js?v=loot-2';
 
 initCaptureTracker(selectHabitat);
 
@@ -309,7 +309,7 @@ function renderGradeLoot(marker,pools){
       const list=document.createElement('ul');list.className='marker-loot-list';body.append(list);
       for(const entry of slot.entries.slice(0,8)){
         const row=document.createElement('li');if(entry.icon){const img=document.createElement('img');img.src=entry.icon;img.alt='';img.loading='lazy';row.append(img);}
-        const name=document.createElement('a');name.href='./wiki.html#item/'+encodeURIComponent(entry.id);name.textContent=entry.name+' ×'+(entry.min===entry.max?entry.min.toLocaleString('en-US'):entry.min.toLocaleString('en-US')+'–'+entry.max.toLocaleString('en-US'));
+        const name=document.createElement('a');name.href='./wiki.html#item/'+encodeURIComponent(entry.wikiId||entry.id);name.textContent=entry.name+' ×'+(entry.min===entry.max?entry.min.toLocaleString('en-US'):entry.min.toLocaleString('en-US')+'–'+entry.max.toLocaleString('en-US'));
         const chance=document.createElement('strong');chance.textContent=Number(entry.share.toFixed(2))+'%';row.append(name,chance);list.append(row);
       }
       if(slot.entries.length>8)body.append(chestNote(`${slot.entries.length-8} more entries in the full table.`));
