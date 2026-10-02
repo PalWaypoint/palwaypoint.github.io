@@ -76,3 +76,5 @@ effigies.json records retain source row IDs and extracted-table hashes. Underlyi
 game data/text belongs to Pocketpair. Effect values are retained as stored;
 the table does not provide unconditional capture probabilities. No
 competitor website supplies these records.
+
+October 2, 2026: team-data.json is independently extracted from installed Steam build 25246127 (Pal stats and growth, passive tables and English text, condenser, souls, EXP, trust, IV fruit and awakening compatibility). Game data and text belong to Pocketpair. Export hashes identify extracted JSON, not original archive bytes. The stat calculation order and native default constants follow Arkive’s independently researched specification: https://github.com/arkive-games/arkive/blob/18acc078dbb275c9ceed8a15511d498fe9e544d5/docs/superpowers/specs/2026-07-19-palworld-stat-formula.md . This derivative stat model is credited to Yihao Liu (tc-imba), under CC BY-NC 4.0; https://creativecommons.org/licenses/by-nc/4.0/ . PalWaypoint provides a separate interface. No competitor data or artwork is used.
