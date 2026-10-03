@@ -40,6 +40,9 @@ jobs:
           if [ -f pal-habitats.js ]; then
             cp pal-habitats.js pal-spawns.json _site/
           fi
+          if [ -f player-tools.zip ]; then
+            unzip -q player-tools.zip -d _site
+          fi
           unzip -q marker-icons.zip -d _site
           unzip -q terrain.zip -d _site
           unzip -q terrain-tree.zip -d _site
