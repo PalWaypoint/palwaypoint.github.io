@@ -6,6 +6,7 @@ import {loadPalHabitats,worldPixel,encounterMarkers,encounterAreas,spawnAreasAt,
 import {palRoster} from './markers.js?v=encounters-1';
 import {markerViewUrl,markerWikiLinks} from './map-links.js';
 import {loadLootTables,poolIdsFor} from './chest-loot.js?v=loot-2';
+import {createBackup} from './progress-backup.js?v=team-1';
 
 const captureTracker=initCaptureTracker(selectHabitat);
 
@@ -23,6 +24,20 @@ const layersToggle=document.querySelector('#layers-toggle');
 const layersPanel=document.querySelector('#layers-panel');
 const mapBody=document.querySelector('#map-body');
 const sidebarBackdrop=document.querySelector('#sidebar-backdrop');
+const mobileSiteMenu=document.querySelector('#mobile-site-menu');
+const mobileMenuButton=mobileSiteMenu.querySelector('summary');
+mobileSiteMenu.addEventListener('toggle',()=>mobileMenuButton.setAttribute('aria-expanded',String(mobileSiteMenu.open)));
+document.addEventListener('pointerdown',event=>{if(mobileSiteMenu.open&&!mobileSiteMenu.contains(event.target))mobileSiteMenu.open=false;});
+mobileSiteMenu.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();mobileSiteMenu.open=false;mobileMenuButton.focus();}});
+mobileSiteMenu.querySelector('nav').addEventListener('click',event=>{if(event.target.closest('a'))mobileSiteMenu.open=false;});
+document.querySelector('#download-map-backup').addEventListener('click',()=>{
+  const status=document.querySelector('#map-backup-status');status.hidden=false;
+  try{
+    const backup=createBackup(localStorage),url=URL.createObjectURL(new Blob([JSON.stringify(backup,null,2)],{type:'application/json'}));
+    const link=document.createElement('a');link.href=url;link.download=`palwaypoint-progress-${backup.exportedAt.slice(0,10)}.json`;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+    status.textContent='Backup download started.';
+  }catch{status.textContent='Could not create a backup. Open Restore progress to try again.';}
+});
 const mapButtons=[...document.querySelectorAll('.map-switcher button')];
 const layerList=document.querySelector('#layer-list');
 const layerStatus=document.querySelector('#layer-status');
@@ -116,7 +131,7 @@ function refreshHabitat(){
     buildHeatSurface();
     const timeLabel=habitatTime==='all'?'day/night':habitatTime;
     const field=habitatMarkers.filter(m=>!m.metadata?.encounterKind).length,special=habitatMarkers.length-field,anywhere=palAvailability(habitatData,selectedPal);
-    document.querySelector('#habitat-status').textContent=habitatMarkers.length?`${field.toLocaleString('en-US')} field · ${special.toLocaleString('en-US')} boss/dungeon locations (${timeLabel}) on ${currentMap.name}.`:anywhere.field||anywhere.special?`No ${timeLabel} encounters on ${currentMap.name}. Try another time or map.`:'No wild spawns recorded. Paldeck shading is not a confirmed spawn.';
+    document.querySelector('#habitat-status').textContent=habitatMarkers.length?`${field.toLocaleString('en-US')} field · ${special.toLocaleString('en-US')} boss/dungeon`:anywhere.field||anywhere.special?`No ${timeLabel} encounters on ${currentMap.name}. Try another time or map.`:'No wild spawns recorded. Paldeck shading is not a confirmed spawn.';
   }
   refreshVisibleMarkers();
 }
@@ -579,6 +594,7 @@ document.querySelector('#zoom-out').addEventListener('click',()=>{cursor=null;zo
 document.querySelector('#reset').addEventListener('click',fit);
 unpinButton.addEventListener('click',()=>{pinnedPosition=null;cursor=null;clearMarkerSelection();scheduleDraw();});
 function toggleLayers(open){
+  if(open)mobileSiteMenu.open=false;
   mapBody.classList.toggle('sidebar-collapsed',!open);
   layersPanel.inert=!open;
   layersPanel.setAttribute('aria-hidden',String(!open));
