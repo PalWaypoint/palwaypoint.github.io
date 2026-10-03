@@ -1,9 +1,9 @@
 import {pixelToGame, screenToPixel} from './coordinates.js';
 import {mapConfigs} from './map-config.js?v=recovery-2';
 import {TerrainElevation} from './elevation.js';
-import {loadMarkers,loadCategories,markerCategories,categoryById,initCaptureTracker,regionAtPixel} from './markers.js?v=encounters-1';
+import {loadMarkers,loadCategories,markerCategories,categoryById,initCaptureTracker,regionAtPixel} from './markers.js?v=paldeck-controls-1';
 import {loadPalHabitats,worldPixel,encounterMarkers,encounterAreas,spawnAreasAt,palAvailability} from './pal-habitats.js?v=encounters-1';
-import {palRoster} from './markers.js?v=encounters-1';
+import {palRoster} from './markers.js?v=paldeck-controls-1';
 import {markerViewUrl,markerWikiLinks} from './map-links.js';
 import {loadLootTables,poolIdsFor} from './chest-loot.js?v=loot-2';
 import {createBackup} from './progress-backup.js?v=team-1';

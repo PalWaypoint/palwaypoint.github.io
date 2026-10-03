@@ -48,8 +48,9 @@ export function initCaptureTracker(onHabitat=()=>{}){
       const sphere=document.createElement('span');sphere.className='sphere-art';sphere.setAttribute('aria-hidden','true');button.append(sphere);
       button.addEventListener('click',()=>{
         if(next==='uncaught')delete progress[pal.id];else progress[pal.id]=next;
-        try{localStorage.setItem(storageKey,JSON.stringify(progress));document.querySelector('#capture-save-note').textContent='Saved on this device. Tracks species across both maps.';}
-        catch{document.querySelector('#capture-save-note').textContent='Could not save in this browser. Progress lasts until this page closes.';}
+        const saveNote=document.querySelector('#capture-save-note');
+        try{localStorage.setItem(storageKey,JSON.stringify(progress));saveNote.textContent='';saveNote.hidden=true;}
+        catch{saveNote.textContent='Could not save in this browser. Progress lasts until this page closes.';saveNote.hidden=false;}
         render();document.querySelector(`[data-pal-id="${pal.id}"]`)?.focus();
       });
       const habitat=document.createElement('button');habitat.type='button';habitat.className='pal-habitat-button';habitat.textContent='Map';
