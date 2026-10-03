@@ -102,7 +102,7 @@ function markerMatches(marker){
   return `${marker.name} ${marker.detail} ${category?.name} ${category?.group}`.toLowerCase().includes(searchTerm);
 }
 function habitatVisible(){return !!selectedPal&&!document.querySelector('#pals-view').hidden;}
-function refreshVisibleMarkers(){visibleMarkers=habitatVisible()?[...habitatMarkers]:markers.filter(markerMatches);updateLayerSummary();scheduleDraw();}
+function refreshVisibleMarkers(){document.querySelector('#habitat-controls').hidden=!habitatVisible();visibleMarkers=habitatVisible()?[...habitatMarkers]:markers.filter(markerMatches);updateLayerSummary();scheduleDraw();}
 for(const view of ['locations','pals'])document.querySelector(`#${view}-tab`).addEventListener('click',()=>{clearMarkerSelection();refreshVisibleMarkers();});
 document.querySelector('#pals-tab').addEventListener('click',()=>{loadPalHabitats().then(data=>{habitatData=data;captureTracker.setAvailability(new Map(palRoster.map(p=>[p.id,palAvailability(data,p.id)])));}).catch(()=>{});});
 function refreshHabitat(){
@@ -126,6 +126,7 @@ async function selectHabitat(id,name=id){
   document.querySelector('#habitat-name').textContent=name;
   document.querySelector('#habitat-profile').href=`./wiki.html#pal/${encodeURIComponent(id)}`;
   document.querySelector('#habitat-status').textContent='Loading habitat…';
+  if(window.matchMedia('(max-width:700px)').matches)toggleLayers(false);
   habitatMarkers=[];clearMarkerSelection();refreshVisibleMarkers();
   try{const [data]=await Promise.all([loadPalHabitats(),categoriesReady]);if(generation!==habitatGeneration)return;habitatData=data;refreshHabitat();}
   catch{if(generation===habitatGeneration)document.querySelector('#habitat-status').textContent='Habitat could not load. Choose this Pal again to retry.';}
@@ -633,7 +634,7 @@ async function switchMap(key){
   markers=[];visibleMarkers=[];markerHits=[];habitatMarkers=[];pinnedPosition=null;cursor=null;regionCursor=null;regionBanner.hidden=true;clearMarkerSelection();markerTooltip.hidden=true;
   elevation=new TerrainElevation(()=>{if(loaded)updateReadout();},currentMap.terrain);
   document.querySelector('#map-name').textContent=currentMap.name.toUpperCase();
-  document.querySelector('#source-link').href=currentMap.sourceUrl;
+  for(const link of document.querySelectorAll('#source-link,[data-map-source]'))link.href=currentMap.sourceUrl;
   for(const button of mapButtons)button.setAttribute('aria-pressed',String(button.dataset.map===key));
   updateLayerControls();layerStatus.textContent='Loading locations…';
   loadImage();
@@ -641,14 +642,16 @@ async function switchMap(key){
   catch{if(generation===mapGeneration){layerStatus.textContent='Location markers could not load. Reload to retry.';document.querySelector('#layers-count').textContent='!';}}
 }
 for(const button of mapButtons)button.addEventListener('click',()=>switchMap(button.dataset.map));
-document.querySelector('#source-link').href=currentMap.sourceUrl;
+for(const link of document.querySelectorAll('#source-link,[data-map-source]'))link.href=currentMap.sourceUrl;
 new ResizeObserver(resize).observe(canvas);
 if(window.matchMedia('(max-width:700px)').matches)toggleLayers(false);
 resize();loadImage();
 Promise.all([categoriesReady,loadMarkers(currentMap)]).then(([,data])=>{if(mapGeneration)return;markers=data;refreshVisibleMarkers();updateLayerControls();focusLinkedMarker();}).catch(()=>{layerStatus.textContent='Location markers could not load. Reload to retry.';document.querySelector('#layers-count').textContent='!';});
 if(linkedParams.get('pal')&&!linkedParams.get('marker')?.startsWith('spawn:')){
   document.querySelector('#pals-tab').click();
-  selectHabitat(linkedParams.get('pal'),linkedParams.get('palName')||linkedParams.get('pal'));
+  habitatTime=['all','night'].includes(linkedParams.get('time'))?linkedParams.get('time'):'day';
+  for(const button of document.querySelectorAll('[data-habitat-time]'))button.setAttribute('aria-pressed',String(button.dataset.habitatTime===habitatTime));
+  selectHabitat(linkedParams.get('pal'),palNames.get(linkedParams.get('pal'))||linkedParams.get('palName')||linkedParams.get('pal'));
 }
 document.querySelector('#map-name').textContent=currentMap.name.toUpperCase();
 mapButtons.forEach(button=>button.setAttribute('aria-pressed',String(mapConfigs[button.dataset.map]===currentMap)));

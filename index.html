@@ -7,7 +7,7 @@
   <meta name="description" content="Explore the Palworld main map with live in-game X and Y coordinates and sampled ground elevation Z. Zoom, pan, and use touch or keyboard controls.">
   <title>PalWaypoint — Palworld Coordinate Map</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2309151d'/%3E%3Ccircle cx='16' cy='16' r='8' fill='none' stroke='%2368e7cb' stroke-width='2'/%3E%3Cpath d='M16 4v7m0 10v7M4 16h7m10 0h7' stroke='%2368e7cb' stroke-width='2'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="./style.css?v=encounters-1">
+  <link rel="stylesheet" href="./style.css?v=map-card-1">
   <link rel="stylesheet" href="./wiki.css?v=team-1">
 </head>
 <body>
@@ -32,18 +32,6 @@
         <p id="layer-status" class="layer-status" role="status">Loading locations…</p>
         </section>
         <section id="pals-view" hidden>
-          <section id="habitat-controls" class="habitat-controls" aria-label="Selected Pal habitat" hidden>
-            <strong id="habitat-name"></strong>
-            <div class="habitat-time"><button type="button" data-habitat-time="all" aria-pressed="false">All</button><button type="button" data-habitat-time="day" aria-pressed="true">Day</button><button type="button" data-habitat-time="night" aria-pressed="false">Night</button><button id="clear-habitat" type="button">Clear</button></div>
-            <div id="habitat-options" class="habitat-options">
-            <label class="habitat-heat-toggle"><input id="habitat-heatmap" type="checkbox" checked>Show spawn heatmap</label>
-            <label class="habitat-heat-toggle"><input id="habitat-pins" type="checkbox" checked>Show spawn pins</label>
-            <button id="browse-spawns" type="button" class="pal-habitat-button" disabled>Browse spawn areas</button>
-            <p id="habitat-status" class="capture-help" role="status"></p>
-            <p class="capture-help">Heat: confirmed field spawns. Pins: field, boss or dungeon entrances. Hover or tap for chances.</p>
-            <a id="habitat-profile" href="./wiki.html#pals">Pal details</a>
-            </div>
-          </section>
           <div id="pal-roster" class="pal-roster" tabindex="0" aria-label="Pal roster">
           <label class="layers-search-label" for="pal-search">Find a Pal</label>
           <input id="pal-search" type="search" placeholder="Search Pals or deck number" autocomplete="off">
@@ -55,6 +43,10 @@
           </div>
         </section>
         <a class="progress-backup-link" href="./wiki.html#backup">Back up &amp; restore progress</a>
+        <div class="mobile-map-links">
+          <a href="https://www.buymeacoffee.com/Chrashy" target="_blank" rel="noopener noreferrer"><span aria-hidden="true">☕</span> Support PalWaypoint</a>
+          <details><summary>Credits &amp; sources</summary><div class="mobile-map-credits"><p>Unofficial fan map · Palworld artwork © Pocketpair</p><a data-map-source href="https://github.com/catrenelle/PalDex/blob/master/frontend/index.html" target="_blank" rel="noopener noreferrer">Map &amp; calibration</a><a href="https://github.com/oMaN-Rod/palworld-save-pal/tree/69213343cbc42abeef8e68b249efad655f17649a/psp-ui/static/maps/dem" target="_blank" rel="noopener noreferrer">Terrain data</a><a href="./MARKER-DATA-LICENSE.txt">Data &amp; icon credits</a></div></details>
+        </div>
       </aside>
     <section class="map-viewport" aria-label="Interactive Palworld world map">
       <canvas id="map" tabindex="0" role="img" aria-label="Palworld world map. Move the pointer to read map X, Y and ground elevation Z in centimeters. Drag to pan, scroll to zoom. Keyboard: arrow keys to pan, plus or minus to zoom, Home to show the whole map." aria-describedby="help">Your browser needs canvas support to display this map.</canvas>
@@ -62,6 +54,17 @@
       <div id="map-error" class="map-error" role="alert" hidden><h2>The map couldn’t load</h2><p>Check your connection and try again.</p><button id="retry" type="button">Reload map</button></div>
       <button id="layers-toggle" class="layers-toggle" type="button" aria-expanded="true" aria-controls="layers-panel" aria-label="Expand location sidebar" title="Expand locations"><span class="sidebar-chevron" aria-hidden="true">›</span><svg class="sidebar-menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
       <nav class="map-switcher" aria-label="Choose map"><button type="button" data-map="islands" aria-pressed="true">Palpagos Islands</button><button type="button" data-map="tree" aria-pressed="false">World Tree</button></nav>
+      <section id="habitat-controls" class="habitat-controls" aria-label="Selected Pal habitat" hidden>
+        <div class="habitat-heading"><strong id="habitat-name"></strong><a id="habitat-profile" href="./wiki.html#pals">Pal details ↗</a></div>
+        <div class="habitat-time"><button type="button" data-habitat-time="all" aria-pressed="false">All</button><button type="button" data-habitat-time="day" aria-pressed="true">Day</button><button type="button" data-habitat-time="night" aria-pressed="false">Night</button><button id="clear-habitat" type="button">Clear</button></div>
+        <div id="habitat-options" class="habitat-options">
+          <label class="habitat-heat-toggle"><input id="habitat-heatmap" type="checkbox" checked aria-label="Show spawn heatmap">Heatmap</label>
+          <label class="habitat-heat-toggle"><input id="habitat-pins" type="checkbox" checked aria-label="Show spawn pins">Pins</label>
+          <button id="browse-spawns" type="button" class="pal-habitat-button" disabled>Browse spawn areas</button>
+        </div>
+        <p id="habitat-status" class="capture-help" role="status"></p>
+        <details class="habitat-help"><summary>About spawn overlays</summary><p>Heat: confirmed field spawns. Pins: field, boss or dungeon entrances. Hover or tap for chances.</p></details>
+      </section>
       <div id="region-banner" class="region-banner" aria-label="Region under cursor" hidden></div>
       <div class="compass" aria-hidden="true"><span>N</span><svg viewBox="0 0 20 30"><path d="M10 1L18 26 10 20 2 26Z"/></svg></div>
       <div id="marker-tooltip" class="marker-tooltip" hidden></div>
@@ -102,6 +105,6 @@
     </div>
     <footer><span>Unofficial fan map · Palworld artwork © Pocketpair</span><span class="source-links"><a id="source-link" href="https://github.com/catrenelle/PalDex/blob/master/frontend/index.html" target="_blank" rel="noopener noreferrer">Map &amp; calibration</a><span aria-hidden="true">·</span><a href="https://github.com/oMaN-Rod/palworld-save-pal/tree/69213343cbc42abeef8e68b249efad655f17649a/psp-ui/static/maps/dem" target="_blank" rel="noopener noreferrer">Terrain data</a><span aria-hidden="true">·</span><a href="./MARKER-DATA-LICENSE.txt">Data &amp; icon credits</a></span><a class="coffee-link" href="https://www.buymeacoffee.com/Chrashy" target="_blank" rel="noopener noreferrer"><span aria-hidden="true">☕</span> Buy me a coffee</a></footer>
   </main>
-  <script type="module" src="./map.js?v=encounters-1"></script>
+  <script type="module" src="./map.js?v=map-card-1"></script>
 </body>
 </html>
