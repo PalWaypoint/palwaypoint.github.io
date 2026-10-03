@@ -31,6 +31,9 @@ jobs:
           if [ -f base-builder.js ]; then
             cp base-builder.js base-builder.css base-storage.js base-logic.js base-data.json _site/
           fi
+          if [ -f base-scene.js ]; then
+            cp base-scene.js base-snapping.js base-visuals.json _site/
+          fi
           if [ -f team-builder.js ]; then
             cp team-builder.js team-logic.js team-storage.js team-data.json _site/
           fi
@@ -46,6 +49,17 @@ jobs:
           if [ -f player-tools.zip ]; then
             unzip -q player-tools.zip -d _site
           fi
+          if [ -f base-assets-01.zip ]; then unzip -q base-assets-01.zip -d _site; fi
+          if [ -f base-assets-02.zip ]; then unzip -q base-assets-02.zip -d _site; fi
+          if [ -f base-assets-03.zip ]; then unzip -q base-assets-03.zip -d _site; fi
+          if [ -f base-assets-04.zip ]; then unzip -q base-assets-04.zip -d _site; fi
+          if [ -f base-assets-05.zip ]; then unzip -q base-assets-05.zip -d _site; fi
+          if [ -f base-assets-06.zip ]; then unzip -q base-assets-06.zip -d _site; fi
+          if [ -f base-assets-07.zip ]; then unzip -q base-assets-07.zip -d _site; fi
+          if [ -f base-assets-08.zip ]; then unzip -q base-assets-08.zip -d _site; fi
+          if [ -f base-assets-09.zip ]; then unzip -q base-assets-09.zip -d _site; fi
+          if [ -f base-assets-10.zip ]; then unzip -q base-assets-10.zip -d _site; fi
+          if [ -f base-assets-11.zip ]; then unzip -q base-assets-11.zip -d _site; fi
           unzip -q marker-icons.zip -d _site
           unzip -q terrain.zip -d _site
           unzip -q terrain-tree.zip -d _site
