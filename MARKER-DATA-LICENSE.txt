@@ -95,11 +95,16 @@ rows; All mode displays both results without averaging. Multi-character rows
 share one group chance. Overlapping spawn pools are displayed separately.
 These percentages are conditional group-selection weight shares, not guarantees
 of a world encounter. Spawn caps and world state can affect actual encounters.
-Heat combines smoothed game Paldeck coverage with weighted placement density;
+Heat smooths confirmed common field placements weighted by their pool shares;
 it is approximate, not an exact spawn boundary or percentage scale. Area
 radii join RadiusType to BP_PalGameSetting defaults (S/M/L) or StaticRadius.
 Hovering outside a radius can show a clearly labeled nearby field area.
-Paldeck-only fallback coverage is labeled without invented encounter chances.
+Paldeck-only clouds are excluded: they do not establish a spawn. Pals without
+placed field, dungeon or boss rows are labeled "No wild spawns recorded".
+Boss and dungeon pools now join positive native rows to their placements.
+BOSS_ character IDs map to their corresponding base species. Dungeon pins
+represent entrances and possible interior encounter pools, not spawn positions
+inside the cave. Separate dungeon pools are never averaged together.
 Export hashes are retained in pal-spawns.json; hashes identify extracted JSON.
 The installed BP_PalGameSetting CaptureExpBonusMaxCount is 5. Manual completion
 labels use 5/5 without altering saved capture-state keys or values.

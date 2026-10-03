@@ -1,13 +1,13 @@
 import {pixelToGame, screenToPixel} from './coordinates.js';
 import {mapConfigs} from './map-config.js?v=recovery-2';
 import {TerrainElevation} from './elevation.js';
-import {loadMarkers,loadCategories,markerCategories,categoryById,initCaptureTracker,regionAtPixel} from './markers.js?v=capture-5';
-import {loadPalHabitats,habitatFor,worldPixel,spawnMarkers,spawnAreas,spawnAreasAt,habitatCloud} from './pal-habitats.js?v=heatmap-1';
-import {palRoster} from './markers.js?v=capture-5';
+import {loadMarkers,loadCategories,markerCategories,categoryById,initCaptureTracker,regionAtPixel} from './markers.js?v=encounters-1';
+import {loadPalHabitats,worldPixel,encounterMarkers,encounterAreas,spawnAreasAt,palAvailability} from './pal-habitats.js?v=encounters-1';
+import {palRoster} from './markers.js?v=encounters-1';
 import {markerViewUrl,markerWikiLinks} from './map-links.js';
 import {loadLootTables,poolIdsFor} from './chest-loot.js?v=loot-2';
 
-initCaptureTracker(selectHabitat);
+const captureTracker=initCaptureTracker(selectHabitat);
 
 const canvas = document.querySelector('#map');
 const context = canvas.getContext('2d');
@@ -104,25 +104,25 @@ function markerMatches(marker){
 function habitatVisible(){return !!selectedPal&&!document.querySelector('#pals-view').hidden;}
 function refreshVisibleMarkers(){visibleMarkers=habitatVisible()?[...habitatMarkers]:markers.filter(markerMatches);updateLayerSummary();scheduleDraw();}
 for(const view of ['locations','pals'])document.querySelector(`#${view}-tab`).addEventListener('click',()=>{clearMarkerSelection();refreshVisibleMarkers();});
+document.querySelector('#pals-tab').addEventListener('click',()=>{loadPalHabitats().then(data=>{habitatData=data;captureTracker.setAvailability(new Map(palRoster.map(p=>[p.id,palAvailability(data,p.id)])));}).catch(()=>{});});
 function refreshHabitat(){
   habitatMarkers=[];habitatAreas=[];heatSurface=null;hideSpawnDetails();
   document.querySelector('#browse-spawns').disabled=true;
   if(selectedPal&&habitatData){
     categoryById.set('Wild Pal Spawn',{name:'Wild Pal Spawn',icon:`./icons/pals/${selectedPal}.webp`,trackable:false});
-    habitatMarkers=spawnMarkers(habitatData,selectedPal,currentMap,habitatTime).map(m=>({...m,name:selectedPalName}));
-    const data=habitatFor(habitatData,selectedPal,currentMap.name);
-    habitatAreas=spawnAreas(habitatData,selectedPal,currentMap,habitatTime);
+    habitatMarkers=encounterMarkers(habitatData,selectedPal,currentMap,habitatTime).map(m=>({...m,name:selectedPalName}));
+    habitatAreas=encounterAreas(habitatData,selectedPal,currentMap,habitatTime);
     document.querySelector('#browse-spawns').disabled=!habitatAreas.length;
     buildHeatSurface();
     const timeLabel=habitatTime==='all'?'day/night':habitatTime;
-    document.querySelector('#habitat-status').textContent=data?`${habitatMarkers.length.toLocaleString('en-US')} possible ${timeLabel} spawn locations on ${currentMap.name}.${!habitatAreas.length&&habitatCloud(habitatData,selectedPal,currentMap.name,habitatTime).length?' Paldeck habitat only; field encounter chances are not recorded here.':''}`:`No wild habitat or field spawn is recorded on ${currentMap.name}.`;
+    const field=habitatMarkers.filter(m=>!m.metadata?.encounterKind).length,special=habitatMarkers.length-field,anywhere=palAvailability(habitatData,selectedPal);
+    document.querySelector('#habitat-status').textContent=habitatMarkers.length?`${field.toLocaleString('en-US')} field · ${special.toLocaleString('en-US')} boss/dungeon locations (${timeLabel}) on ${currentMap.name}.`:anywhere.field||anywhere.special?`No ${timeLabel} encounters on ${currentMap.name}. Try another time or map.`:'No wild spawns recorded. Paldeck shading is not a confirmed spawn.';
   }
   refreshVisibleMarkers();
 }
 async function selectHabitat(id,name=id){
   selectedPal=id;selectedPalName=name;const generation=++habitatGeneration;
   document.querySelector('#habitat-controls').hidden=false;
-  document.querySelector('#habitat-options').hidden=false;
   document.querySelector('#habitat-name').textContent=name;
   document.querySelector('#habitat-profile').href=`./wiki.html#pal/${encodeURIComponent(id)}`;
   document.querySelector('#habitat-status').textContent='Loading habitat…';
@@ -133,16 +133,16 @@ async function selectHabitat(id,name=id){
 for(const button of document.querySelectorAll('[data-habitat-time]'))button.addEventListener('click',()=>{
   habitatTime=button.dataset.habitatTime;for(const b of document.querySelectorAll('[data-habitat-time]'))b.setAttribute('aria-pressed',String(b===button));clearMarkerSelection();refreshHabitat();
 });
-document.querySelector('#clear-habitat').addEventListener('click',()=>{selectedPal=null;habitatGeneration++;habitatMarkers=[];habitatAreas=[];heatSurface=null;document.querySelector('#habitat-controls').hidden=true;document.querySelector('#habitat-options').hidden=true;clearMarkerSelection();refreshVisibleMarkers();});
+document.querySelector('#clear-habitat').addEventListener('click',()=>{selectedPal=null;habitatGeneration++;habitatMarkers=[];habitatAreas=[];heatSurface=null;document.querySelector('#habitat-controls').hidden=true;clearMarkerSelection();refreshVisibleMarkers();});
 heatmapToggle.addEventListener('change',scheduleDraw);
 spawnPinsToggle.addEventListener('change',scheduleDraw);
 function buildHeatSurface(){
   // Rasterize once in map coordinates. Panning/zooming cannot move the kernels.
   const size=1024,ratio=size/4096,density=new Float32Array(size*size);
-  // Paldeck coverage uses a fixed-world smoothing kernel, not a claimed spawn
-  // boundary or probability. Field areas add their weighted concentration.
+  // Smooth confirmed field placements only. Paldeck clouds can contain species
+  // with no spawn rows; dungeon entrances and boss points are shown as pins.
   const smoothing=Math.min(35000,(currentMap.terrain.maxX-currentMap.terrain.minX)*.025);
-  const samples=[...habitatCloud(habitatData,selectedPal,currentMap.name,habitatTime).map(([x,y])=>({pixel:worldPixel(x,y,currentMap),radiusX:Math.abs(currentMap.calibration.pixelsPerX*smoothing/459),radiusY:Math.abs(currentMap.calibration.pixelsPerY*smoothing/459),chance:1})),...habitatAreas];
+  const samples=habitatAreas.filter(a=>a.type==='Field').map(a=>({...a,radiusX:Math.abs(currentMap.calibration.pixelsPerX*smoothing/459),radiusY:Math.abs(currentMap.calibration.pixelsPerY*smoothing/459)}));
   for(const area of samples){
     const x=area.pixel.x*ratio,y=area.pixel.y*ratio,rx=Math.max(1,area.radiusX*ratio),ry=Math.max(1,area.radiusY*ratio);
     const left=Math.max(0,Math.floor(x-rx)),right=Math.min(size-1,Math.ceil(x+rx)),top=Math.max(0,Math.floor(y-ry)),bottom=Math.min(size-1,Math.ceil(y+ry));
@@ -168,13 +168,20 @@ function chanceText(value){if(!value)return '—';return value<.0005?'<0.05%':(v
 function renderSpawnGroups(target,areas,nearby=false,browse=false){
   target.replaceChildren();if(!areas.length)return;
   const selector=document.createElement('select');selector.setAttribute('aria-label','Encounter area');
-  for(const area of areas){const option=document.createElement('option');option.value=area.id;option.textContent=`X ${Math.round((area.worldY-158000)/459)}, Y ${Math.round((area.worldX+123888)/459)} · Z ${Math.round(area.worldZ/100)} m`;selector.append(option);}
+  const locationCounts=new Map();
+  for(const area of areas){const key=[area.kind,area.worldX,area.worldY,area.worldZ].join(':');locationCounts.set(key,(locationCounts.get(key)||0)+1);}
+  const locationIndexes=new Map();
+  for(const area of areas){
+    const key=[area.kind,area.worldX,area.worldY,area.worldZ].join(':'),index=(locationIndexes.get(key)||0)+1;locationIndexes.set(key,index);
+    const option=document.createElement('option');option.value=area.id;
+    option.textContent=`${area.kind||'Field'}${locationCounts.get(key)>1?' pool '+index+'/'+locationCounts.get(key):''} · X ${Math.round((area.worldY-158000)/459)}, Y ${Math.round((area.worldX+123888)/459)} · Z ${Math.round(area.worldZ/100)} m`;selector.append(option);
+  }
   selector.hidden=areas.length===1;target.append(selector);
   const body=document.createElement('div');target.append(body);
   const render=()=>{
     body.replaceChildren();const area=areas.find(a=>a.id===selector.value)||areas[0];
     if(areas.length===1){const coordinates=document.createElement('p');coordinates.className='spawn-meta';coordinates.textContent=selector.options[0].textContent;body.append(coordinates);}
-    const location=document.createElement('p');location.className='spawn-meta';location.textContent=`${nearby?'Nearby field area · ':''}${habitatTime==='all'?'Day & night':habitatTime==='night'?'Night':'Day'} · ${Math.round(area.radius/100)} m spawn radius${area.worldZ< -10000?' · Underground':''}`;body.append(location);
+    const location=document.createElement('p');location.className='spawn-meta';location.textContent=`${nearby?'Nearby location · ':''}${area.kind||'Field'} · ${habitatTime==='all'?'Day & night':habitatTime==='night'?'Night':'Day'}${area.type?.startsWith('Dungeon')?' · Entrance location; possible dungeon encounter pool':area.type==='Field'?' · '+Math.round(area.radius/100)+' m spawn radius':''}${area.worldZ< -10000?' · Underground':''}`;body.append(location);
     const table=document.createElement('table');table.className='spawn-table';
     const thead=document.createElement('thead'),heading=document.createElement('tr');
     for(const text of ['Encounter group',...(habitatTime==='all'?['Day','Night']:['Chance'])]){const th=document.createElement('th');th.scope='col';th.textContent=text;heading.append(th);}thead.append(heading);table.append(thead);
@@ -194,7 +201,7 @@ function renderSpawnGroups(target,areas,nearby=false,browse=false){
       tr.append(members);for(const t of habitatTime==='all'?['day','night']:[habitatTime]){const td=document.createElement('td');td.textContent=chanceText(row.chances[t]);tr.append(td);}tbody.append(tr);
     }
     table.append(tbody);body.append(table);
-    const note=document.createElement('p');note.className='spawn-note';note.textContent='Chance of selecting this encounter group from the eligible game-table rows. Members in one row spawn together. — means unavailable for that time. Actual encounters also depend on spawn limits and world conditions.';body.append(note);
+    const note=document.createElement('p');note.className='spawn-note';note.textContent='Chance of selecting this encounter group from the eligible game-table rows. Members in one row spawn together. — means unavailable for that time. Actual encounters also depend on spawn limits and world conditions.'+(area.type?.startsWith('Dungeon')?' Dungeon chances apply when this pool is chosen; they are not combined across rooms or other dungeon pools.':'');body.append(note);
     if(areas.length>1){const overlap=document.createElement('p');overlap.className='spawn-note';overlap.textContent=`${areas.length} spawn areas ${browse?'available for this Pal':'overlap here'}. Choose an area above; their chances are kept separate.`;body.append(overlap);}
   };
   selector.addEventListener('change',render);render();
@@ -286,7 +293,7 @@ function drawMarkers(){
   }
   context.save();context.textAlign='center';context.textBaseline='middle';context.font='bold 11px Segoe UI,Arial,sans-serif';
   // Small fixed-position spawn pins keep dense heatmaps readable at all zooms.
-  for(const {x,y,marker}of spawnPins){context.beginPath();context.arc(x,y,2.5,0,Math.PI*2);context.fillStyle='#a78beb';context.fill();context.lineWidth=1;context.strokeStyle='#edf8ff';context.stroke();markerHits.push({x,y,r:7,markers:[marker]});}
+  for(const {x,y,marker}of spawnPins){const kind=marker.metadata?.encounterKind;context.beginPath();context.arc(x,y,kind?5:2.5,0,Math.PI*2);context.fillStyle=kind?(kind.startsWith('Dungeon')?'#68e7cb':'#ffdf74'):'#a78beb';context.fill();context.lineWidth=kind?2:1;context.strokeStyle='#edf8ff';context.stroke();markerHits.push({x,y,r:kind?10:7,markers:[marker]});}
   for(const cell of cells.values()){
     const count=cell.markers.length,x=camera.x+cell.x/count*camera.scale,y=camera.y+cell.y/count*camera.scale,cluster=count>1,r=cluster?16:14;
     if(x< -24||x>width+24||y< -24||y>height+24)continue;
@@ -312,13 +319,14 @@ function drawMarkers(){
   context.restore();
 }
 function markerHit(point){for(let i=markerHits.length-1;i>=0;i--){const hit=markerHits[i];if(Math.hypot(point.x-hit.x,point.y-hit.y)<=hit.r)return hit;}return null;}
+function markerDisplayCategory(marker){const kind=marker.metadata?.encounterKind;return kind?(kind.startsWith('Dungeon')?'Dungeon encounter':'Boss encounter'):categoryById.get(marker.category).name;}
 function showMarkerTooltip(point){
   const hit=markerHit(point);
   hoveredMarker=hit?.markers.length===1?hit.markers[0]:null;
   if(!hit){markerTooltip.hidden=true;return;}
   markerTooltip.replaceChildren();
   const title=document.createElement('strong');title.textContent=hit.markers.length===1?hit.markers[0].name:`${hit.markers.length} locations`;
-  const subtitle=document.createElement('span');subtitle.textContent=hit.markers.length===1?categoryById.get(hit.markers[0].category).name:'Click to zoom in';
+  const subtitle=document.createElement('span');subtitle.textContent=hit.markers.length===1?markerDisplayCategory(hit.markers[0]):'Click to zoom in';
   markerTooltip.append(title,subtitle);markerTooltip.hidden=false;
   markerTooltip.style.left=`${Math.min(point.x+17,width-190)}px`;
   markerTooltip.style.top=`${Math.max(8,point.y-54)}px`;
@@ -411,7 +419,7 @@ function selectMarker(marker){
   markerDetail.hidden=false;
   document.querySelector('#marker-detail-dot').src=marker.icon||categoryById.get(marker.category).icon;
   document.querySelector('#marker-detail-name').textContent=marker.name;
-  document.querySelector('#marker-detail-type').textContent=`${categoryById.get(marker.category).name}${marker.detail?` · ${marker.detail}`:''}${marker.level?` · Lv ${marker.level}`:''}${marker.metadata?.underground?' · Underground':''}${marker.metadata?.condition?' · '+marker.metadata.condition:''}`;
+  document.querySelector('#marker-detail-type').textContent=`${markerDisplayCategory(marker)}${marker.detail?` · ${marker.detail}`:''}${marker.level?` · Lv ${marker.level}`:''}${marker.metadata?.underground?' · Underground':''}${marker.metadata?.condition?' · '+marker.metadata.condition:''}`;
   document.querySelector('#marker-detail-coordinates').textContent=`X ${decimal(marker.gameX)} · Y ${decimal(marker.gameY)}`;
   const trackable=isTrackable(marker);
   markerProgressControl.hidden=!trackable;markerProgressNote.hidden=!trackable;

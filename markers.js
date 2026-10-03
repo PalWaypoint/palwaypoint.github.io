@@ -22,7 +22,7 @@ export function regionAtPixel(point,mapName){
 export function initCaptureTracker(onHabitat=()=>{}){
   const storageKey='palwaypoint-captures-v1', valid=new Set(palRoster.map(pal=>pal.id));
   function readCaptureProgress(){try{const saved=JSON.parse(localStorage.getItem(storageKey)||'{}');if(saved&&typeof saved==='object'&&!Array.isArray(saved))return Object.fromEntries(Object.entries(saved).filter(([id,state])=>!['__proto__','constructor','prototype'].includes(id)&&['caught','complete'].includes(state)));}catch{}return {};}
-  let progress=readCaptureProgress(),filter='all';
+  let progress=readCaptureProgress(),filter='all',availability=null;
   const list=document.querySelector('#pal-list'), search=document.querySelector('#pal-search');
   const summary=document.querySelector('#capture-summary'), filters=document.querySelector('#capture-filters');
   const labels={uncaught:'Uncaught',caught:'Caught',complete:'Complete (5/5 captures)'};
@@ -42,6 +42,7 @@ export function initCaptureTracker(onHabitat=()=>{}){
       const row=document.createElement('div');row.className='capture-row';
       const portrait=document.createElement('img');portrait.className='capture-portrait';portrait.src=`./icons/pals/${pal.id}.webp`;portrait.alt='';portrait.loading='lazy';
       const name=document.createElement('span');name.textContent=`#${pal.number} ${pal.name}`;
+      if(availability){const a=availability.get(pal.id),label=document.createElement('small');label.className='pal-spawn-label';label.textContent=a?.field?`${a.field.toLocaleString('en-US')} field${a.special?' · '+a.special+' boss/dungeon':''}`:a?.special?`${a.special} boss/dungeon`:'No wild spawns recorded';name.append(label);}
       const button=document.createElement('button');button.type='button';button.className=`capture-sphere ${state}`;
       const next=nextCaptureState(state);button.setAttribute('aria-label',`${pal.name}: ${labels[state]}. Mark ${labels[next].toLowerCase()}`);button.title=`${labels[state]} — click to mark ${labels[next].toLowerCase()}`;
       const sphere=document.createElement('span');sphere.className='sphere-art';sphere.setAttribute('aria-hidden','true');button.append(sphere);
@@ -66,6 +67,7 @@ export function initCaptureTracker(onHabitat=()=>{}){
     render();
   });
   search.addEventListener('input',render);render();
+  return {setAvailability(value){availability=value;render();}};
 }
 
 export const markerCategories=[];
