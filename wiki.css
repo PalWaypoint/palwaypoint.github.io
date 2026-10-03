@@ -17,3 +17,5 @@ footer{align-items:center;flex-wrap:wrap}.coffee-link{display:inline-flex;align-
 @media(max-width:700px){.site-nav>a,.systems-menu>summary{padding:8px 4px}} .team-manager input,.team-manager select,.team-field input,.team-field select{color:#e7f5f4}
 
 .inherit-field{display:grid;gap:6px;margin:10px 0}.inherit-field select,.inherit-field input{width:100%;min-width:0}.team-passive-grid fieldset{min-width:0}#team-buffs,#team-inheritance{margin-top:32px;scroll-margin-top:100px}
+
+.wiki-main input[id^="loadout-"]{width:100%;min-width:0;padding:11px 12px;background:#102936;border:1px solid #42616b;border-radius:6px;color:#e7f5f4;font:inherit}.wiki-main input[type=file]{max-width:100%;color:#adc6ce;font:inherit}.wiki-main input[type=file]::file-selector-button{background:#163642;border:1px solid #42616b;border-radius:6px;color:#e7f5f4;padding:10px 12px;margin-right:8px;cursor:pointer}.wiki-main [hidden]{display:none!important}
