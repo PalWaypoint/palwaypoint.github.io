@@ -6,7 +6,7 @@ import {loadPalHabitats,worldPixel,encounterMarkers,encounterAreas,spawnAreasAt,
 import {palRoster} from './markers.js?v=paldeck-controls-1';
 import {markerViewUrl,markerWikiLinks} from './map-links.js';
 import {loadLootTables,poolIdsFor} from './chest-loot.js?v=loot-2';
-import {createBackup} from './progress-backup.js?v=team-1';
+import {createBackup} from './progress-backup.js?v=base-1';
 
 const captureTracker=initCaptureTracker(selectHabitat);
 
