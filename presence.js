@@ -32,7 +32,9 @@ export function startPresence(env, endpoint) {
   const text = document.createElement('span');
   badge.append(dot, text);
   const map = document.querySelector('.map-viewport');
-  (map || document.querySelector('.wiki-footer') || document.body).append(badge);
+  const topbar = map?.querySelector('.map-topbar');
+  const header = document.querySelector('.wiki-body > .masthead');
+  (topbar || map || header || document.body).append(badge);
 
   let socket, heartbeat, retry, expiry, stable, attempts = 0, stopped = false, suspended = false;
   const hide = () => {

@@ -9,7 +9,7 @@
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2309151d'/%3E%3Ccircle cx='16' cy='16' r='8' fill='none' stroke='%2368e7cb' stroke-width='2'/%3E%3Cpath d='M16 4v7m0 10v7M4 16h7m10 0h7' stroke='%2368e7cb' stroke-width='2'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="./style.css?v=touch-regions-1">
   <link rel="stylesheet" href="./wiki.css?v=player-import-2">
-  <link rel="stylesheet" href="./presence.css?v=presence-1">
+  <link rel="stylesheet" href="./presence.css?v=presence-2">
 </head>
 <body>
   <main class="map-shell">
@@ -59,8 +59,10 @@
       <div id="loading" class="loading" role="status"><span class="loading-orbit" aria-hidden="true"></span><p>Opening the islands…</p></div>
       <div id="map-error" class="map-error" role="alert" hidden><h2>The map couldn’t load</h2><p>Check your connection and try again.</p><button id="retry" type="button">Reload map</button></div>
       <button id="layers-toggle" class="layers-toggle" type="button" aria-expanded="true" aria-controls="layers-panel" aria-label="Expand location sidebar" title="Expand locations"><span class="sidebar-chevron" aria-hidden="true">›</span><svg class="sidebar-menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+      <div class="map-topbar">
       <nav class="map-switcher" aria-label="Choose map"><button type="button" data-map="islands" aria-pressed="true">Palpagos Islands</button><button type="button" data-map="tree" aria-pressed="false">World Tree</button></nav>
       <details id="mobile-site-menu" class="mobile-site-menu"><summary aria-label="Open section menu" title="Site sections"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v6H4zm10 0h6v6h-6zM4 14h6v6H4zm10 0h6v6h-6z"/></svg></summary><nav aria-label="Site sections"><a href="./index.html">Map</a><a href="./wiki.html#pals">Pals</a><a href="./wiki.html#items">Items</a><a href="./wiki.html#ranch">Ranch</a><a href="./wiki.html#breeding">Breeding</a><a href="./wiki.html#technology">Technology</a><a href="./wiki.html#fishing">Fishing</a><a href="./wiki.html#chest-loot">Chest loot</a><a href="./wiki.html#base-camp">Base camp</a><a href="./wiki.html#base-builder">Base builder</a><a href="./wiki.html#merchants">Merchants</a><a href="./wiki.html#teams">Teams</a><a href="./wiki.html#loadout">Loadout</a><a href="./wiki.html#save-import">Import save</a><a href="./wiki.html#checklist">Checklist</a><a href="./wiki.html#effigies">Effigies</a><a href="./wiki.html#guide">Guide</a><a href="./wiki.html#about">About &amp; sources</a></nav></details>
+      </div>
       <section id="habitat-controls" class="habitat-controls" aria-label="Selected Pal habitat" hidden>
         <div class="habitat-heading"><strong id="habitat-name"></strong><a id="habitat-profile" href="./wiki.html#pals">Pal details</a><button id="clear-habitat" type="button" aria-label="Clear" title="Clear selected Pal">×</button></div>
         <div class="habitat-time"><button type="button" data-habitat-time="all" aria-pressed="false">All</button><button type="button" data-habitat-time="day" aria-pressed="true">Day</button><button type="button" data-habitat-time="night" aria-pressed="false">Night</button></div>
@@ -114,6 +116,6 @@
     <footer><span>Unofficial fan map · Palworld artwork © Pocketpair</span><span class="source-links"><a id="source-link" href="https://github.com/catrenelle/PalDex/blob/master/frontend/index.html" target="_blank" rel="noopener noreferrer">Map &amp; calibration</a><span aria-hidden="true">·</span><a href="https://github.com/oMaN-Rod/palworld-save-pal/tree/69213343cbc42abeef8e68b249efad655f17649a/psp-ui/static/maps/dem" target="_blank" rel="noopener noreferrer">Terrain data</a><span aria-hidden="true">·</span><a href="./MARKER-DATA-LICENSE.txt">Data &amp; icon credits</a></span><a class="coffee-link" href="https://www.buymeacoffee.com/Chrashy" target="_blank" rel="noopener noreferrer"><span aria-hidden="true">☕</span> Buy me a coffee</a></footer>
   </main>
   <script type="module" src="./map.js?v=native-regions-1"></script>
-  <script type="module" src="./presence.js?v=presence-1"></script>
+  <script type="module" src="./presence.js?v=presence-2"></script>
 </body>
 </html>
