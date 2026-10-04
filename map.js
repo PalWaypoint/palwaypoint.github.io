@@ -1,9 +1,9 @@
 import {pixelToGame, screenToPixel} from './coordinates.js';
 import {mapConfigs} from './map-config.js?v=recovery-2';
 import {TerrainElevation} from './elevation.js';
-import {loadMarkers,loadCategories,markerCategories,categoryById,initCaptureTracker,regionAtPixel} from './markers.js?v=paldeck-controls-1';
+import {loadMarkers,loadCategories,markerCategories,categoryById,initCaptureTracker,regionAtPixel} from './markers.js?v=native-regions-1';
 import {loadPalHabitats,worldPixel,encounterMarkers,encounterAreas,spawnAreasAt,palAvailability} from './pal-habitats.js?v=encounters-1';
-import {palRoster} from './markers.js?v=paldeck-controls-1';
+import {palRoster} from './markers.js?v=native-regions-1';
 import {markerViewUrl,markerWikiLinks} from './map-links.js';
 import {loadLootTables,poolIdsFor} from './chest-loot.js?v=loot-2';
 import {createBackup} from './progress-backup.js?v=base-1';
@@ -45,7 +45,7 @@ const markerSearch=document.querySelector('#marker-search');
 const markerTooltip=document.querySelector('#marker-tooltip');
 const regionBanner=document.querySelector('#region-banner');
 const mobileRegionName=document.querySelector('#mobile-region-name');
-let regionCursor=null,regionTappedPixel=null;
+let regionCursor=null,regionTappedPixel=null,lastRegion=null;
 const markerDetail=document.querySelector('#marker-detail');
 const markerLoot=document.querySelector('#marker-loot');
 const markerProgressControl=document.querySelector('#marker-progress-control');
@@ -517,10 +517,11 @@ function draw(){
   updateReadout();
   const regionPoint=regionTappedPixel||(regionCursor?screenToPixel(regionCursor.x,regionCursor.y,camera):null);
   const region=regionPoint?regionAtPixel(regionPoint,currentMap.name):null;
-  regionBanner.hidden=!region;
-  mobileRegionName.hidden=!region;
-  if(region&&regionBanner.textContent!==region.name)regionBanner.textContent=region.name;
-  if(region&&mobileRegionName.textContent!==region.name)mobileRegionName.textContent=region.name;
+  if(region)lastRegion=region;
+  regionBanner.hidden=!lastRegion;
+  mobileRegionName.hidden=!lastRegion;
+  if(lastRegion&&regionBanner.textContent!==lastRegion.name)regionBanner.textContent=lastRegion.name;
+  if(lastRegion&&mobileRegionName.textContent!==lastRegion.name)mobileRegionName.textContent=lastRegion.name;
 }
 function fit(){
   if(!loaded)return;
@@ -585,7 +586,7 @@ function endPointer(event){
 }
 for(const name of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(name,endPointer);
 // Retain the last hover destination while the pointer moves to the Copy button.
-canvas.addEventListener('pointerleave',()=>{regionCursor=null;if(!regionTappedPixel)regionBanner.hidden=true;markerTooltip.hidden=true;if(!pointers.size)scheduleDraw();});
+canvas.addEventListener('pointerleave',()=>{regionCursor=null;markerTooltip.hidden=true;if(!pointers.size)scheduleDraw();});
 canvas.addEventListener('wheel',event=>{event.preventDefault();const point=position(event);cursor=point;regionCursor=point;zoomAt(Math.exp(-Math.max(-100,Math.min(100,event.deltaY))*.003),point);},{passive:false});
 canvas.addEventListener('keydown',event=>{
   if(!loaded)return;
@@ -654,7 +655,7 @@ image.onerror=()=>{loaded=false;loading.hidden=true;error.hidden=false;controls.
 async function switchMap(key){
   if(!mapConfigs[key]||currentMap===mapConfigs[key])return;
   currentMap=mapConfigs[key];const generation=++mapGeneration;
-  markers=[];visibleMarkers=[];markerHits=[];habitatMarkers=[];pinnedPosition=null;cursor=null;regionCursor=null;regionTappedPixel=null;regionBanner.hidden=true;mobileRegionName.hidden=true;clearMarkerSelection();markerTooltip.hidden=true;
+  markers=[];visibleMarkers=[];markerHits=[];habitatMarkers=[];pinnedPosition=null;cursor=null;regionCursor=null;regionTappedPixel=null;lastRegion=null;regionBanner.hidden=true;mobileRegionName.hidden=true;clearMarkerSelection();markerTooltip.hidden=true;
   elevation=new TerrainElevation(()=>{if(loaded)updateReadout();},currentMap.terrain);
   document.querySelector('#map-name').textContent=currentMap.name.toUpperCase();
   for(const link of document.querySelectorAll('#source-link,[data-map-source]'))link.href=currentMap.sourceUrl;

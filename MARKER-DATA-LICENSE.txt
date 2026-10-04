@@ -40,9 +40,16 @@ Coordinate conversion: https://github.com/palworldlol/palworld-coord
 Terrain elevation: Palworld Save Pal's game-extracted DEM tiles, with its
 GPL-3.0 license notices bundled in terrain/LICENSE.txt and terrain-tree/LICENSE.txt.
 https://github.com/oMaN-Rod/palworld-save-pal
-Surface region geometry: independently extracted Arkive game data,
-CC BY-NC 4.0. Source geometry belongs to Pocketpair.
+Region footprints: direct read-only recovery from installed Palworld Steam
+build 25246127. All 123 named WorldMapAreaData entries join localized names
+and placed box/sphere components with complete parent transforms. All eight
+box corners are projected; spheres use 96-point footprints. Smallest footprint
+wins where regions overlap. Cave footprints are not surface entrances.
+World Tree localized area names match travel points, but their boundaries
+remain unverified. No ambient-audio volume boundaries were substituted.
+Historical region-kind classification: Arkive game data, CC BY-NC 4.0.
 https://github.com/arkive-games/arkive
+Underlying game data and geometry belong to Pocketpair.
 
 Category badges: original PalWaypoint compositions using Lucide Static 1.48.0
 pictograms, ISC license in icons/palwaypoint/LICENSE-lucide.txt.

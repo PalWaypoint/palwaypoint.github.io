@@ -33,6 +33,8 @@ Chest previews are independently rebuilt from Arkive's extracted item acquisitio
 
 The main-world and World Tree textures come from [PalDex's game-extracted map assets](https://github.com/catrenelle/PalDex/tree/master/frontend/assets), files `map.webp` and `tree.webp` retrieved September 30, 2026. Both were uniformly reduced from 8192×8192 to 4096×4096 without cropping. The published textures can be rebuilt with `research-independent/build-map-assets.py`. Palworld artwork belongs to Pocketpair, Inc.
 
+Region labels appear on hover or a mobile tap and retain the last identified region across gaps until another region is selected. Switching maps clears the label. The main map uses all 123 named entries in the installed game's region table: 81 surface regions, 17 caves, 19 sealed realms and six towers. Footprints use complete attached-component transforms, including No. 1 Wildlife Sanctuary's parent offset, and project native volumes onto the map; the smallest overlapping footprint takes priority. Underground footprints do not indicate surface access. All three wildlife sanctuaries are included. World Tree's 12 localized area names have matching travel-point markers, but their named area boundaries remain unverified; no boundaries are inferred from ambient audio volumes. This is complete coverage of the recovered region table, not a claim of verified boundaries for every localized place name.
+
 For normalized image coordinates `u = pixelX / imageWidth`, `v = pixelY / imageHeight`:
 
 ```
