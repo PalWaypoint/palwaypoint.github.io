@@ -21,6 +21,7 @@ body.base-fullscreen{overflow:hidden}body.base-fullscreen>.masthead,body.base-fu
 @media print{.base-floor-controls{display:none!important}}
 /* Long presses belong to placement gestures; editable fields retain selection. */
 @media(max-width:650px),(any-pointer:coarse){
+ body.base-fullscreen .base-builder,body.base-fullscreen .base-builder :not(canvas){touch-action:manipulation}
  body.base-fullscreen .base-builder,body.base-fullscreen .base-builder *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
  body.base-fullscreen .base-builder input,body.base-fullscreen .base-builder textarea,body.base-fullscreen .base-builder [contenteditable=true],body.base-fullscreen .base-builder [contenteditable=true] *{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
 }
