@@ -19,3 +19,8 @@ body.base-fullscreen{overflow:hidden}body.base-fullscreen>.masthead,body.base-fu
 @media(max-width:650px){.base-builder input:not([type=checkbox]),.base-builder select,.base-builder textarea{font-size:16px}.base-view-picker select{width:109px}.base-map-button{font-size:12px;padding:7px 9px}.base-floor-controls{right:8px;top:58px}.base-floor-controls label{font-size:10px}.base-place-controls{grid-template-columns:1.1fr .8fr .8fr .9fr}.base-history,.catalog-open .base-history{left:8px;bottom:190px}}
 @media(max-height:500px){.base-history{bottom:160px}.base-floor-controls{top:58px}.base-drawer{top:58px;bottom:8px}}
 @media print{.base-floor-controls{display:none!important}}
+/* Long presses belong to placement gestures; editable fields retain selection. */
+@media(max-width:650px),(any-pointer:coarse){
+ body.base-fullscreen .base-builder,body.base-fullscreen .base-builder *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+ body.base-fullscreen .base-builder input,body.base-fullscreen .base-builder textarea,body.base-fullscreen .base-builder [contenteditable=true],body.base-fullscreen .base-builder [contenteditable=true] *{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
+}
