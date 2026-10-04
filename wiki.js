@@ -1,4 +1,4 @@
-import {renderBaseBuilder} from './base-builder.js?v=base-3';
+import {renderBaseBuilder} from './base-builder.js?v=base-layout-1';
 import {baseStorageKey} from './base-storage.js';
 import {renderSaveImport,renderLoadout,loadPlayerData} from './player-tools/planner.js';
 import {markerViewUrl} from './map-links.js';
