@@ -44,7 +44,8 @@ const layerStatus=document.querySelector('#layer-status');
 const markerSearch=document.querySelector('#marker-search');
 const markerTooltip=document.querySelector('#marker-tooltip');
 const regionBanner=document.querySelector('#region-banner');
-let regionCursor=null;
+const mobileRegionName=document.querySelector('#mobile-region-name');
+let regionCursor=null,regionTappedPixel=null;
 const markerDetail=document.querySelector('#marker-detail');
 const markerLoot=document.querySelector('#marker-loot');
 const markerProgressControl=document.querySelector('#marker-progress-control');
@@ -514,15 +515,18 @@ function draw(){
   controls[0].disabled=camera.scale>=fitScale*12-.00001;
   controls[1].disabled=camera.scale<=fitScale*.5+.00001;
   updateReadout();
-  const region=regionCursor?regionAtPixel(screenToPixel(regionCursor.x,regionCursor.y,camera),currentMap.name):null;
+  const regionPoint=regionTappedPixel||(regionCursor?screenToPixel(regionCursor.x,regionCursor.y,camera):null);
+  const region=regionPoint?regionAtPixel(regionPoint,currentMap.name):null;
   regionBanner.hidden=!region;
+  mobileRegionName.hidden=!region;
   if(region&&regionBanner.textContent!==region.name)regionBanner.textContent=region.name;
+  if(region&&mobileRegionName.textContent!==region.name)mobileRegionName.textContent=region.name;
 }
 function fit(){
   if(!loaded)return;
   fitScale=Math.min((width-24)/image.naturalWidth,(height-24)/image.naturalHeight);
   camera.scale=fitScale;camera.x=(width-image.naturalWidth*camera.scale)/2;camera.y=(height-image.naturalHeight*camera.scale)/2;
-  cursor=null;pinnedPosition=null;clearMarkerSelection();scheduleDraw();
+  cursor=null;pinnedPosition=null;regionTappedPixel=null;clearMarkerSelection();scheduleDraw();
 }
 function resize(){
   const rect=canvas.getBoundingClientRect();
@@ -548,6 +552,7 @@ canvas.addEventListener('pointerdown',event=>{
   if(!loaded||event.button!==0)return;
   canvas.focus({preventScroll:true});canvas.setPointerCapture(event.pointerId);
   const point=position(event);pointers.set(event.pointerId,point);cursor=point;
+  regionTappedPixel=null;regionCursor=event.pointerType==='touch'?null:point;
   if(pointers.size===1){pressStart=point;pressMoved=false;}
   if(pointers.size===2){lastPinch=pinchState();pressMoved=true;}canvas.classList.add('dragging');scheduleDraw();
 });
@@ -555,6 +560,7 @@ canvas.addEventListener('pointermove',event=>{
   if(!loaded)return;
   const point=position(event);const previous=pointers.get(event.pointerId);
   regionCursor=event.pointerType==='touch'?null:point;
+  if(event.pointerType!=='touch')regionTappedPixel=null;
   if(previous){
     if(pressStart&&Math.hypot(point.x-pressStart.x,point.y-pressStart.y)>6)pressMoved=true;
     pointers.set(event.pointerId,point);
@@ -566,6 +572,7 @@ canvas.addEventListener('pointermove',event=>{
 function endPointer(event){
   if(event.type==='pointerup'&&pointers.size===1&&pressStart&&!pressMoved){
     const at=position(event),hit=markerHit(at);
+    if(event.pointerType==='touch'){regionTappedPixel=screenToPixel(at.x,at.y,camera);scheduleDraw();}
     if(hit?.markers.length===1)selectMarker(hit.markers[0]);
     else if(hit?.markers.length>1){markerTooltip.hidden=true;zoomAt(2,at);}
     else{const pixel=screenToPixel(at.x,at.y,camera);if(onMap(pixel)){clearMarkerSelection();pinnedPosition=pixel;showSpawnAt(pixel,true);scheduleDraw();}}
@@ -578,11 +585,11 @@ function endPointer(event){
 }
 for(const name of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(name,endPointer);
 // Retain the last hover destination while the pointer moves to the Copy button.
-canvas.addEventListener('pointerleave',()=>{regionCursor=null;regionBanner.hidden=true;markerTooltip.hidden=true;if(!pointers.size)scheduleDraw();});
+canvas.addEventListener('pointerleave',()=>{regionCursor=null;if(!regionTappedPixel)regionBanner.hidden=true;markerTooltip.hidden=true;if(!pointers.size)scheduleDraw();});
 canvas.addEventListener('wheel',event=>{event.preventDefault();const point=position(event);cursor=point;regionCursor=point;zoomAt(Math.exp(-Math.max(-100,Math.min(100,event.deltaY))*.003),point);},{passive:false});
 canvas.addEventListener('keydown',event=>{
   if(!loaded)return;
-  if(event.key==='Escape'){event.preventDefault();pinnedPosition=null;cursor=null;clearMarkerSelection();scheduleDraw();return;}
+  if(event.key==='Escape'){event.preventDefault();pinnedPosition=null;cursor=null;regionTappedPixel=null;regionCursor=null;clearMarkerSelection();scheduleDraw();return;}
   const moves={ArrowLeft:[65,0],ArrowRight:[-65,0],ArrowUp:[0,65],ArrowDown:[0,-65]};
   if(moves[event.key]){event.preventDefault();cursor=null;camera.x+=moves[event.key][0];camera.y+=moves[event.key][1];constrain();draw();}
   else if(['+','=','-','_','Home'].includes(event.key)){event.preventDefault();cursor=null;if(event.key==='Home')fit();else zoomAt(['+','='].includes(event.key)?1.3:1/1.3);draw();}
@@ -647,7 +654,7 @@ image.onerror=()=>{loaded=false;loading.hidden=true;error.hidden=false;controls.
 async function switchMap(key){
   if(!mapConfigs[key]||currentMap===mapConfigs[key])return;
   currentMap=mapConfigs[key];const generation=++mapGeneration;
-  markers=[];visibleMarkers=[];markerHits=[];habitatMarkers=[];pinnedPosition=null;cursor=null;regionCursor=null;regionBanner.hidden=true;clearMarkerSelection();markerTooltip.hidden=true;
+  markers=[];visibleMarkers=[];markerHits=[];habitatMarkers=[];pinnedPosition=null;cursor=null;regionCursor=null;regionTappedPixel=null;regionBanner.hidden=true;mobileRegionName.hidden=true;clearMarkerSelection();markerTooltip.hidden=true;
   elevation=new TerrainElevation(()=>{if(loaded)updateReadout();},currentMap.terrain);
   document.querySelector('#map-name').textContent=currentMap.name.toUpperCase();
   for(const link of document.querySelectorAll('#source-link,[data-map-source]'))link.href=currentMap.sourceUrl;

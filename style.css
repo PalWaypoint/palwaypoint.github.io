@@ -56,6 +56,8 @@
 }
 .map-body .layers-panel{display:flex;flex-direction:column;overflow:hidden}.layers-panel>.layers-heading,.layers-panel>.sidebar-tabs,.sidebar-footer{flex:none}#locations-view{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;scrollbar-color:#456c79 transparent}.sidebar-footer{position:relative;background:#102b3c}.mobile-sidebar-brand,.mobile-backup-actions,.mobile-site-menu{display:none}.map-backup-status{font-size:.68rem;color:var(--muted);line-height:1.35;margin:4px 0}.habitat-heading #clear-habitat{flex:none;width:28px;height:28px;border:0;border-radius:5px;background:#173740;color:var(--muted);font-size:1.2rem;line-height:1;cursor:pointer}
 .wiki-body .wiki-brand{grid-template-columns:28px auto;align-items:center;gap:9px}.wiki-brand-crosshair{width:28px;height:28px;fill:none;stroke:var(--accent);stroke-width:1.5}
+.mobile-region-name{display:none}
+@media(max-width:700px){.map-viewport .region-banner{display:none}.coordinate-panel .mobile-region-name{display:block;color:var(--accent);font-size:.8rem;font-weight:650;line-height:1.3;margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid #36505b}}
 @media(max-width:700px){
   .map-shell>.masthead{display:none}
   .desktop-sidebar-title,.layers-heading #layers-count{display:none}
