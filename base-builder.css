@@ -10,3 +10,12 @@ body.base-fullscreen{overflow:hidden}body.base-fullscreen>.masthead,body.base-fu
 @media(max-width:650px){.base-readout{bottom:170px}}
 
 .base-mobile-text{display:none}.base-mode-row button{white-space:nowrap}.base-top button{white-space:nowrap}@media(max-width:650px){.base-desktop-text{display:none}.base-mobile-text{display:inline}.base-top #base-details-toggle{min-width:48px}}
+
+/* Keep text controls at Safari's non-zooming size without disabling page zoom. */
+.base-builder input:not([type=checkbox]),.base-builder select,.base-builder textarea{font-size:16px}
+.base-map-button{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:8px 12px;border:1px solid #426575;border-radius:6px;background:#102936f2;text-decoration:none;color:#e6f3f3!important}
+.base-floor-controls{position:absolute;right:12px;top:64px;z-index:3;display:flex;align-items:center;gap:4px;padding:5px;border:1px solid #426575;border-radius:8px;background:#102936ed}
+.base-floor-controls label{text-align:center;min-width:52px}.base-floor-controls select{text-align:center;padding:4px;min-height:34px}.base-floor-controls button{width:36px;padding:5px;font-size:20px}.base-history{bottom:170px}.catalog-open .base-history{left:310px}
+@media(max-width:650px){.base-builder input:not([type=checkbox]),.base-builder select,.base-builder textarea{font-size:16px}.base-view-picker select{width:109px}.base-map-button{font-size:12px;padding:7px 9px}.base-floor-controls{right:8px;top:58px}.base-floor-controls label{font-size:10px}.base-place-controls{grid-template-columns:1.1fr .8fr .8fr .9fr}.base-history,.catalog-open .base-history{left:8px;bottom:190px}}
+@media(max-height:500px){.base-history{bottom:160px}.base-floor-controls{top:58px}.base-drawer{top:58px;bottom:8px}}
+@media print{.base-floor-controls{display:none!important}}
