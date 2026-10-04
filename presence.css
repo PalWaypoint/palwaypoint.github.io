@@ -7,9 +7,8 @@
 .wiki-body>.masthead>.wiki-brand{grid-column:1;grid-row:1;justify-self:start}
 .wiki-body>.masthead>.presence-badge{grid-column:2;grid-row:1;justify-self:end}
 .wiki-body>.masthead>.site-nav{grid-column:1/-1;grid-row:2;justify-content:flex-end;margin-left:0}
-body.base-fullscreen.presence-online>.masthead{display:block;position:fixed;width:0;height:0;padding:0;border:0;pointer-events:none}
-body.base-fullscreen>.masthead>*:not(.presence-badge){display:none}
-body.base-fullscreen>.masthead>.presence-badge{position:fixed;left:12px;top:max(68px,calc(env(safe-area-inset-top) + 64px));z-index:2}
+.base-top>.presence-badge{flex:none;pointer-events:none}
+.base-top>.base-view-picker{min-width:0}
 @media(max-width:700px){
  .presence-badge{font-size:11px;padding:4px 7px}
  .map-topbar{top:12px;left:58px;right:12px;display:grid;grid-template-columns:minmax(0,1fr) auto 38px;gap:6px}
@@ -19,6 +18,9 @@ body.base-fullscreen>.masthead>.presence-badge{position:fixed;left:12px;top:max(
  .map-topbar>.mobile-site-menu{position:relative;right:auto;top:auto;grid-column:3;grid-row:1;pointer-events:auto}
  .map-body:not(.sidebar-collapsed) .map-topbar{visibility:hidden;pointer-events:none}
  .wiki-body>.masthead>.site-nav{justify-content:space-between}
- body.base-fullscreen>.masthead>.presence-badge{left:8px;top:max(60px,calc(env(safe-area-inset-top) + 56px))}
+ .base-top>.presence-badge{font-size:10px;padding:4px 5px;gap:4px}
+ .base-top>.base-view-picker{flex:1;max-width:130px}
+ .base-top>.base-view-picker select{width:100%;text-overflow:ellipsis}
+ .base-builder .base-top>button,.base-builder .base-top>.base-map-button{font-size:10px;padding:7px 5px}
 }
 @media print{.presence-badge{display:none!important}}

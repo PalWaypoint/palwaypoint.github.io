@@ -34,7 +34,16 @@ export function startPresence(env, endpoint) {
   const map = document.querySelector('.map-viewport');
   const topbar = map?.querySelector('.map-topbar');
   const header = document.querySelector('.wiki-body > .masthead');
-  (topbar || map || header || document.body).append(badge);
+  const placeBadge = () => {
+    const lists = document.querySelector('#base-details-toggle');
+    if (lists) lists.parentElement.insertBefore(badge, lists);
+    else (topbar || map || header || document.body).append(badge);
+  };
+  placeBadge();
+  // The guide switches between pages and the builder without reloading.
+  const content = document.querySelector('#wiki-content');
+  const layoutObserver = content && env.MutationObserver ? new env.MutationObserver(placeBadge) : null;
+  layoutObserver?.observe(content, { childList: true });
 
   let socket, heartbeat, retry, expiry, stable, attempts = 0, stopped = false, suspended = false;
   const hide = () => {
@@ -104,6 +113,7 @@ export function startPresence(env, endpoint) {
   return () => {
     stopped = true;
     leave();
+    layoutObserver?.disconnect();
     badge.remove();
     env.removeEventListener('pagehide', leave);
     env.removeEventListener('pageshow', resume);
