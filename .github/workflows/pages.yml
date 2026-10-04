@@ -28,6 +28,7 @@ jobs:
           mkdir -p _site
           cp index.html coordinates.js elevation.js map-config.js map.js markers.js marker-categories.json markers.json tree-markers.json chest-tips.json style.css world-map.webp tree-map.webp MARKER-DATA-LICENSE.txt _site/
           cp presence.js presence-config.js presence.css _site/
+          cp map-guide.html robots.txt sitemap.xml favicon.svg _site/
           cp wiki.html wiki.js wiki.css wiki-logic.js wiki-data.json WIKI-DATA-LICENSE.txt _site/
           if [ -f base-builder.js ]; then
             cp base-builder.js base-builder.css base-storage.js base-logic.js base-data.json _site/
@@ -64,6 +65,10 @@ jobs:
           unzip -q marker-icons.zip -d _site
           unzip -q terrain.zip -d _site
           unzip -q terrain-tree.zip -d _site
+          test -f _site/map-guide.html
+          test -f _site/robots.txt
+          test -f _site/sitemap.xml
+          test -f _site/favicon.svg
           test -f _site/index.html
           test -f _site/terrain/4/0/0.png
           test -f _site/terrain-tree/4/0/0.png

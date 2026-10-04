@@ -83,3 +83,6 @@
   .habitat-controls .habitat-heat-toggle,.habitat-options .pal-habitat-button{min-height:30px}.habitat-options{gap:3px 12px}.habitat-options .pal-habitat-button{padding:4px 8px}.habitat-controls .capture-help{margin:3px 0 0;font-size:.68rem}
   .map-controls{top:auto;bottom:36px}
 }
+
+/* Map help remains readable without the canvas or JavaScript. */
+.map-about{margin:8px 0;color:var(--muted);font-size:.72rem;line-height:1.5}.map-about summary{cursor:pointer;padding:5px 0;color:var(--accent)}.map-about h2{font-size:.9rem;color:var(--text);margin:8px 0}.map-about p{margin:6px 0}.map-about>a{display:inline-block;padding:5px 0;color:var(--accent)}

@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://palwaypoint.github.io/sitemap.xml
