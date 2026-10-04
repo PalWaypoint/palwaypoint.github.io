@@ -27,6 +27,7 @@ jobs:
         run: |
           mkdir -p _site
           cp index.html coordinates.js elevation.js map-config.js map.js markers.js marker-categories.json markers.json tree-markers.json chest-tips.json style.css world-map.webp tree-map.webp MARKER-DATA-LICENSE.txt _site/
+          cp presence.js presence-config.js presence.css _site/
           cp wiki.html wiki.js wiki.css wiki-logic.js wiki-data.json WIKI-DATA-LICENSE.txt _site/
           if [ -f base-builder.js ]; then
             cp base-builder.js base-builder.css base-storage.js base-logic.js base-data.json _site/

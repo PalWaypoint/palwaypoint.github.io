@@ -2,6 +2,10 @@
 
 An unofficial browser map focused on the in-game X/Y coordinates at the pointer, with sampled landscape Z elevation. Includes mouse, touch and keyboard zoom/pan controls. No game connection or server credentials are needed.
 
+## Online count
+
+The optional online badge shows an approximate site-wide count of connected browsers. Tabs share a random browser ID stored separately from game progress; storage-disabled tabs can count separately. The counter receives no progress, inventory or save files and keeps no visitor history. It hides while unavailable. A hibernating Cloudflare Durable Object with SQLite configuration supports the Workers Free plan; exceeding limits affects the badge without blocking the site. `presence-worker/` contains the service source and configuration. Deploy it separately with Wrangler, then set `presenceEndpoint` in `presence-config.js` to its verified `wss://…/connect` URL. Only the published site origin is permitted by default.
+
 ## Run locally
 
 ## Field guide
